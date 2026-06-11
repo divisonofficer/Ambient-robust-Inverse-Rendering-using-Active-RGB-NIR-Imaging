@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>RGB-NIR Dataset Preview Recorder</title>
+    <style>
+      body {
+        margin: 0;
+        background: #111;
+        color: #eee;
+        font-family: system-ui, sans-serif;
+      }
+
+      #stage {
+        width: 320px;
+        height: 240px;
+        background: #000;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module">
+      import { mountDatasetViewer } from "../static/viewers/real-dataset-3d/viewer.js?v=preview-recorder-4";
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      window.recorderBoot = "ready";
+
+      window.recordScene = async function recordScene(folder, options = {}) {
+        const stage = document.getElementById("stage");
+        const width = options.width || 320;
+        const height = options.height || 240;
+        const fps = options.fps || 24;
+        const seconds = options.seconds || 4;
+        const warmupFrames = options.warmupFrames || 48;
+        const pitch = options.pitch || Math.PI * 0.48;
+        const bitrate = options.bitrate || 700000;
+        const modality = options.modality === "nir" ? "nir" : "rgb";
+
+        stage.style.width = `${width}px`;
+        stage.style.height = `${height}px`;
+        stage.innerHTML = "";
+
+        const viewer = mountDatasetViewer({
+          container: stage,
+          basePath: `../static/viewers/real-dataset-3d/${folder}/`,
+        });
+        viewer.setModality(modality);
+
+        await sleep(options.loadDelay || 3000);
+
+        const canvas = stage.querySelector("canvas");
+        if (!canvas?.captureStream) throw new Error("Canvas captureStream is unavailable.");
+
+        for (let i = 0; i < warmupFrames; i += 1) {
+          viewer.setSharedOrbit((i / warmupFrames) * Math.PI * 2, pitch);
+          await sleep(1000 / fps);
+        }
+
+        const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+          ? "video/webm;codecs=vp9"
+          : "video/webm;codecs=vp8";
+        const stream = canvas.captureStream(fps);
+        const chunks = [];
+        const recorder = new MediaRecorder(stream, {
+          mimeType,
+          videoBitsPerSecond: bitrate,
+        });
+
+        recorder.ondataavailable = (event) => {
+          if (event.data.size) chunks.push(event.data);
+        };
+
+        recorder.start();
+        const frameCount = Math.round(seconds * fps);
+        for (let i = 0; i < frameCount; i += 1) {
+          viewer.setSharedOrbit((i / frameCount) * Math.PI * 2, pitch);
+          await sleep(1000 / fps);
+        }
+
+        await new Promise((resolve) => {
+          recorder.onstop = resolve;
+          recorder.stop();
+        });
+        stream.getTracks().forEach((track) => track.stop());
+
+        viewer.dispose();
+        stage.innerHTML = "";
+
+        const blob = new Blob(chunks, { type: mimeType });
+        const buffer = await blob.arrayBuffer();
+        return {
+          mimeType,
+          bytes: Array.from(new Uint8Array(buffer)),
+        };
+      };
+    </script>
+  </head>
+  <body>
+    <div id="stage"></div>
+  </body>
+</html>

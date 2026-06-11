@@ -1,0 +1,701 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dataset 3D Viewer (Gaussian surfels)</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0a0a; overflow: hidden;
+               font-family: ui-monospace, monospace; color: #ddd; }
+  #three { position: fixed; inset: 0; display: block; }
+  #hud { position: fixed; left: 12px; top: 12px; z-index: 10;
+         background: rgba(0,0,0,.55); padding: 10px 12px; border-radius: 8px;
+         font-size: 12px; line-height: 1.6; pointer-events: none; white-space: pre; }
+  #hud b { color: #6cf; } .on { color: #9f9; } .off { color: #777; }
+  .tag { color: #9f9; } .tag.test { color: #f99; }
+  #err { position: fixed; inset: 0; display: none; z-index: 20; padding: 40px;
+         align-items: center; justify-content: center; color: #f88; text-align: center; }
+</style>
+</head>
+<body>
+<canvas id="three"></canvas>
+<div id="hud">loading??/div>
+<div id="err"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// --- static asset locations (relative -> works on any static host) -----------
+const BASE = './';
+const MOD_DIR = { rgb: './viewer_cache/rgba/', nir: './viewer_cache/nir_rgba/' };
+const IMG_EXT = 'webp';         // 'png' for dev; export bundles patch this to 'webp'
+let MODALITY = 'rgb';          // 'rgb' | 'nir', toggled with [N]
+let NIR_OK = false;
+const imgURL = f => MOD_DIR[MODALITY] + f.stem + '.' + IMG_EXT;
+const PLY_NAME = 'point_cloud.ply';
+// Gaussian quaternion layout: most 3DGS/2DGS exporters store rot as (w,x,y,z).
+// If the surfels look spiky/wrong, flip this to false (treat as x,y,z,w).
+const QUAT_W_FIRST = true;
+
+const SH_C0 = 0.28209479177387814;
+const sigmoid = x => 1 / (1 + Math.exp(-x));
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+const hud = document.getElementById('hud');
+const errBox = document.getElementById('err');
+function fail(m) { errBox.style.display = 'flex'; errBox.textContent = m; console.error(m); }
+
+let CENTER, UP, FRAMES, R, FOVX, ASPECT;
+let renderer, scene, camera, controls;
+let gaussianMesh = null, GCOUNT = 0, GDATA = null;
+let frustumGroup, frustumMode = false;
+// modes: 1=impostor no-blend(default) 2=temporal fade 3=same-plane blend
+//        4=Gaussian(debug) 5=tex-surf(debug) 6=tex+GS(debug)
+let mode = 1;
+let IMPOSTORS = false;
+let K = 1.0;                   // splat size multiplier
+const DEPTH_W = 192;           // depth-map resolution for textured mesh modes
+let DEPTH_STRENGTH = 0.25;     // 0 = flat impostor plane, 1 = full depth mesh
+let texMeshA = null, texMeshB = null, texMeshAId = -1, texMeshBId = -1;
+let warpMesh = null, warpMat = null, warpBaseId = -1;
+function invalidateMeshes() { texMeshAId = -1; texMeshBId = -1; warpBaseId = -1; }
+// impostor view-transition policy state
+const SWITCH_MARGIN_DOT = 0.012;  // hysteresis: only switch when clearly better
+const FADE_MS = 150;              // temporal crossfade duration on a switch
+let currentFrame = null, previousFrame = null, switchTime = 0;
+// camera-motion factor: 1 while orbiting, decays to 0 at rest. depth-warp only
+// blends neighbour views while moving; at rest it snaps to one sharp image.
+const lastCamPos = new THREE.Vector3();
+let motion = 0;
+
+if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+  fail('This 3D viewer uses ES modules and fetch-based assets, so it must be opened through HTTP/HTTPS static hosting such as GitHub Pages or localhost.');
+} else {
+  init();
+}
+async function init() {
+  try {
+    const [tr, te] = await Promise.all([
+      fetch(BASE + 'transforms_train.json').then(r => r.json()),
+      fetch(BASE + 'transforms_test.json').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    setupFrames(tr, te);
+
+    const cv = document.getElementById('three');
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a);
+    camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.001, 1000);
+    // camera.up is set in finishCenterUp() once UP is computed.
+
+    // Gaussian point cloud -> centroid gives the true object center.
+    try {
+      const buf = await fetch(BASE + PLY_NAME).then(r => {
+        if (!r.ok) throw new Error('no ply'); return r.arrayBuffer();
+      });
+      buildGaussians(parsePLY(buf));
+    } catch (e) {
+      console.warn('[viewer] point_cloud.ply not loaded:', e.message);
+    }
+
+    finishCenterUp();
+    camera.position.copy(FRAMES[0].posV);
+    lastCamPos.copy(camera.position);
+    controls = new OrbitControls(camera, cv);
+    controls.target.copy(CENTER);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.7;
+    controls.minDistance = R * 0.15;
+    controls.maxDistance = R * 5;
+    controls.update();
+
+    slotA = makeSlot(); slotB = makeSlot();
+    buildFrustums();
+
+    // probe impostor availability (graceful if the build step wasn't run).
+    // GET (not HEAD) for static-host compatibility; one small PNG, cached after.
+    const probe = async dir => { try { return (await fetch(dir + FRAMES[0].stem + '.' + IMG_EXT, { cache: 'force-cache' })).ok; } catch { return false; } };
+    IMPOSTORS = await probe(MOD_DIR.rgb);
+    NIR_OK = await probe(MOD_DIR.nir);
+    if (!gaussianMesh && !IMPOSTORS) return fail('point_cloud.ply ?? impostor PNG ???놁쓬');
+    // default = depth-warp interpolation when both gaussians+impostors exist;
+    // else plain impostor (no PLY) or Gaussian debug (no impostor build).
+    mode = (GDATA && IMPOSTORS) ? 2 : (IMPOSTORS ? 1 : 4);
+
+    resize();
+    addEventListener('resize', resize);
+    addEventListener('keydown', onKey);
+    applyMode();
+    animate();
+  } catch (e) { fail('珥덇린???ㅽ뙣: ' + e); }
+}
+
+// --- camera frames ------------------------------------------------------------
+function col(m, c) { return new THREE.Vector3(m[0][c], m[1][c], m[2][c]); }
+
+function setupFrames(tr, te) {
+  FOVX = tr.camera_angle_x || 0.6;
+  ASPECT = (tr.h && tr.w) ? tr.h / tr.w : 1;
+  const all = [];
+  const push = (data, split) => {
+    if (!data) return;
+    for (const fr of data.frames) {
+      const m = fr.transform_matrix;
+      const pos = col(m, 3);
+      all.push({
+        id: all.length, split,
+        stem: fr.file_path.split('/').pop(),
+        posV: pos,
+        dirV: col(m, 2).multiplyScalar(-1).normalize(),  // forward = -Z
+        rightV: col(m, 0).normalize(),
+        upV: col(m, 1).normalize(),
+      });
+    }
+  };
+  push(tr, 'train'); push(te, 'test');
+  FRAMES = all;
+  // provisional center = mean camera position (refined after gaussians load)
+  CENTER = new THREE.Vector3();
+  FRAMES.forEach(f => CENTER.add(f.posV));
+  CENTER.multiplyScalar(1 / FRAMES.length);
+}
+
+function finishCenterUp() {
+  // up = hemisphere pole = mean direction from center to cameras
+  UP = new THREE.Vector3();
+  FRAMES.forEach(f => UP.add(f.posV.clone().sub(CENTER)));
+  UP.normalize();
+  camera.up.copy(UP);
+  R = 0; FRAMES.forEach(f => R += f.posV.distanceTo(CENTER)); R /= FRAMES.length;
+  FRAMES.forEach(f => {
+    f.fromCenter = f.posV.clone().sub(CENTER).normalize();
+    f.toCenter = CENTER.clone().sub(f.posV).dot(f.dirV);
+  });
+}
+
+// --- PLY (Gaussian Splatting) binary parser ----------------------------------
+function parsePLY(buf) {
+  const bytes = new Uint8Array(buf);
+  const head = new TextDecoder().decode(bytes.subarray(0, Math.min(bytes.length, 30000)));
+  const endTok = 'end_header\n';
+  const endIdx = head.indexOf(endTok);
+  if (endIdx < 0) throw new Error('PLY header end not found');
+  const dataOffset = endIdx + endTok.length;
+  const lines = head.slice(0, endIdx).split('\n');
+  let n = 0; const props = [];
+  for (const ln of lines) {
+    if (ln.startsWith('element vertex')) n = parseInt(ln.split(/\s+/).pop());
+    else if (ln.startsWith('property')) props.push(ln.split(/\s+/).pop());  // all float
+  }
+  const idx = {}; props.forEach((p, i) => idx[p] = i);
+  const stride = props.length * 4;
+  const dv = new DataView(buf);
+  const g = (base, name) => dv.getFloat32(base + idx[name] * 4, true);
+
+  const iPos = new Float32Array(n * 3), iColor = new Float32Array(n * 3);
+  const iAlpha = new Float32Array(n), iScale = new Float32Array(n * 2), iQuat = new Float32Array(n * 4);
+  const cen = new THREE.Vector3(); let wsum = 0;
+  for (let i = 0; i < n; i++) {
+    const b = dataOffset + i * stride;
+    const x = g(b, 'x'), y = g(b, 'y'), z = g(b, 'z');
+    iPos[i*3] = x; iPos[i*3+1] = y; iPos[i*3+2] = z;
+    iColor[i*3]   = clamp(0.5 + SH_C0 * g(b, 'f_dc_0'), 0, 1);
+    iColor[i*3+1] = clamp(0.5 + SH_C0 * g(b, 'f_dc_1'), 0, 1);
+    iColor[i*3+2] = clamp(0.5 + SH_C0 * g(b, 'f_dc_2'), 0, 1);
+    const a = sigmoid(g(b, 'opacity'));
+    iAlpha[i] = a;
+    iScale[i*2]   = Math.exp(g(b, 'scale_0'));
+    iScale[i*2+1] = Math.exp(g(b, 'scale_1'));
+    let q0 = g(b, 'rot_0'), q1 = g(b, 'rot_1'), q2 = g(b, 'rot_2'), q3 = g(b, 'rot_3');
+    let qx, qy, qz, qw;
+    if (QUAT_W_FIRST) { qw = q0; qx = q1; qy = q2; qz = q3; }
+    else { qx = q0; qy = q1; qz = q2; qw = q3; }
+    const nq = Math.hypot(qx, qy, qz, qw) || 1;
+    iQuat[i*4] = qx/nq; iQuat[i*4+1] = qy/nq; iQuat[i*4+2] = qz/nq; iQuat[i*4+3] = qw/nq;
+    cen.x += x*a; cen.y += y*a; cen.z += z*a; wsum += a;
+  }
+  if (wsum > 0) cen.multiplyScalar(1 / wsum);
+  return { n, iPos, iColor, iAlpha, iScale, iQuat, centroid: cen };
+}
+
+const GS_VERT = `
+attribute vec3 iPos; attribute vec3 iColor; attribute float iAlpha;
+attribute vec2 iScale; attribute vec4 iQuat;
+varying vec3 vColor; varying float vAlpha; varying vec2 vUv;
+uniform float uK;
+vec3 qrot(vec4 q, vec3 v){ return v + 2.0*cross(q.xyz, cross(q.xyz, v) + q.w*v); }
+void main(){
+  vUv = uv; vColor = iColor; vAlpha = iAlpha;
+  vec3 local = vec3(position.xy * iScale * (2.0*uK), 0.0);
+  vec3 world = iPos + qrot(iQuat, local);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(world, 1.0);
+}`;
+const GS_FRAG = `
+varying vec3 vColor; varying float vAlpha; varying vec2 vUv;
+uniform float uAlphaMul;
+void main(){
+  float r = length(vUv - 0.5) * 2.0;        // 0 at center, 1 at disk edge
+  if (r > 1.0) discard;
+  float a = vAlpha * smoothstep(1.0, 0.55, r) * uAlphaMul;
+  if (a < 0.12) discard;
+  gl_FragColor = vec4(vColor, a);
+}`;
+
+function buildGaussians(G) {
+  GCOUNT = G.n;
+  GDATA = G;                               // keep for per-view depth rasterization
+  CENTER = G.centroid.clone();             // refine object center
+  const quad = new THREE.PlaneGeometry(1, 1);   // verts in [-0.5,0.5], uv 0..1
+  const geo = new THREE.InstancedBufferGeometry();
+  geo.index = quad.index;
+  geo.setAttribute('position', quad.attributes.position);
+  geo.setAttribute('uv', quad.attributes.uv);
+  geo.setAttribute('iPos', new THREE.InstancedBufferAttribute(G.iPos, 3));
+  geo.setAttribute('iColor', new THREE.InstancedBufferAttribute(G.iColor, 3));
+  geo.setAttribute('iAlpha', new THREE.InstancedBufferAttribute(G.iAlpha, 1));
+  geo.setAttribute('iScale', new THREE.InstancedBufferAttribute(G.iScale, 2));
+  geo.setAttribute('iQuat', new THREE.InstancedBufferAttribute(G.iQuat, 4));
+  geo.instanceCount = G.n;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uK: { value: K }, uAlphaMul: { value: 1.0 } },
+    vertexShader: GS_VERT, fragmentShader: GS_FRAG,
+    transparent: true, depthTest: true, depthWrite: true, side: THREE.DoubleSide,
+  });
+  gaussianMesh = new THREE.Mesh(geo, mat);
+  gaussianMesh.frustumCulled = false;
+  scene.add(gaussianMesh);
+  console.log('[viewer] gaussians:', G.n, ' centroid:', CENTER.toArray().map(v => +v.toFixed(3)));
+}
+
+// --- impostor planes (modes 2/3) ---------------------------------------------
+const loader = new THREE.TextureLoader();
+const texCache = new Map(); const TEX_CAP = 32;
+let slotA, slotB;
+function getTexture(f) {
+  const key = MODALITY + ':' + f.id;
+  let t = texCache.get(key);
+  if (t) { texCache.delete(key); texCache.set(key, t); return t; }
+  t = loader.load(imgURL(f)); t.colorSpace = THREE.SRGBColorSpace;
+  texCache.set(key, t);
+  while (texCache.size > TEX_CAP) { const k = texCache.keys().next().value; texCache.get(k).dispose(); texCache.delete(k); }
+  return t;
+}
+function makeSlot() {
+  const mat = new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.02,
+    depthTest: true, depthWrite: false, side: THREE.DoubleSide });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+  m.visible = false; scene.add(m); return m;
+}
+function placeSlot(slot, f, opacity) {
+  const t = Math.max(0.1, f.toCenter);
+  const planeW = 2 * t * Math.tan(FOVX / 2), planeH = planeW * ASPECT;
+  const basis = new THREE.Matrix4().makeBasis(f.rightV, f.upV, f.dirV.clone().negate());
+  slot.quaternion.setFromRotationMatrix(basis);
+  slot.position.copy(f.posV).addScaledVector(f.dirV, t);
+  slot.scale.set(planeW, planeH, 1);
+  slot.material.map = getTexture(f);
+  slot.material.opacity = opacity;
+  slot.material.needsUpdate = true;
+}
+function pickTwo() {
+  const view = camera.position.clone().sub(CENTER).normalize();
+  let b1 = null, b2 = null, d1 = -2, d2 = -2;
+  for (const f of FRAMES) {
+    const dot = view.dot(f.fromCenter);
+    if (dot > d1) { d2 = d1; b2 = b1; d1 = dot; b1 = f; }
+    else if (dot > d2) { d2 = dot; b2 = f; }
+  }
+  return [b1, b2, d1, d2];
+}
+
+// --- per-view textured depth mesh (modes 4/5, DIBR) --------------------------
+// Project the gaussian centers into the chosen source camera to get a low-res
+// depth map, dilate to fill holes, unproject to a grid mesh, texture it with
+// the source RGBA image. A per-view surface proxy: image detail on point-cloud
+// depth. Rebuilt only when the nearest source view changes. Uses positions +
+// scale only (independent of the gaussian quaternion convention).
+function rasterizeDepth(f, W) {
+  const H = Math.max(8, Math.round(W * ASPECT));
+  const INF = 1e20;
+  const depth = new Float32Array(W * H).fill(INF);
+  const tanX = Math.tan(FOVX / 2), tanY = tanX * ASPECT;
+  const ox = f.posV.x, oy = f.posV.y, oz = f.posV.z;
+  const dx = f.dirV.x, dy = f.dirV.y, dz = f.dirV.z;
+  const rx = f.rightV.x, ry = f.rightV.y, rz = f.rightV.z;
+  const ux = f.upV.x, uy = f.upV.y, uz = f.upV.z;
+  const P = GDATA.iPos, S = GDATA.iScale, n = GDATA.n;
+  for (let i = 0; i < n; i++) {
+    const ax = P[i*3] - ox, ay = P[i*3+1] - oy, az = P[i*3+2] - oz;
+    const z = ax*dx + ay*dy + az*dz;
+    if (z <= 0.001) continue;
+    const x = ax*rx + ay*ry + az*rz, y = ax*ux + ay*uy + az*uz;
+    const u = 0.5 + 0.5 * x / (z * tanX), v = 0.5 - 0.5 * y / (z * tanY);
+    if (u < 0 || u > 1 || v < 0 || v > 1) continue;
+    const cx = Math.floor(u * (W - 1)), cy = Math.floor(v * (H - 1));
+    const sw = Math.max(S[i*2], S[i*2+1]);
+    const rad = clamp(Math.ceil(sw * (W / (2 * z * tanX)) * K * 2.0), 1, 8), r2 = rad*rad;
+    for (let ddy = -rad; ddy <= rad; ddy++) {
+      const qy = cy + ddy; if (qy < 0 || qy >= H) continue;
+      for (let ddx = -rad; ddx <= rad; ddx++) {
+        if (ddx*ddx + ddy*ddy > r2) continue;
+        const qx = cx + ddx; if (qx < 0 || qx >= W) continue;
+        const idx = qy * W + qx;
+        if (z < depth[idx]) depth[idx] = z;
+      }
+    }
+  }
+  return { depth, W, H, INF };
+}
+function dilateDepth(depth, W, H, INF, passes) {
+  let cur = depth;
+  for (let p = 0; p < passes; p++) {
+    const next = new Float32Array(cur);
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      const idx = y * W + x;
+      if (cur[idx] < INF) continue;
+      let best = INF;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const z = cur[(y+dy)*W + (x+dx)]; if (z < best) best = z;
+      }
+      if (best < INF) next[idx] = best;
+    }
+    cur = next;
+  }
+  return cur;
+}
+// Relaxed-warp depth surface for view f -> BufferGeometry (position+uv+index,
+// world coords). Missing depth -> flat impostor plane (z0); present depth ->
+// lerp toward it by DEPTH_STRENGTH. Silhouette is left to the RGBA mask alpha,
+// so edges stay smooth no matter how holey the cloud is.
+function buildDepthGeometry(f, W) {
+  const ras = rasterizeDepth(f, W);
+  const H = ras.H, INF = ras.INF;
+  const depth = dilateDepth(ras.depth, W, H, INF, 3);
+  const tanX = Math.tan(FOVX / 2), tanY = tanX * ASPECT;
+  const z0 = Math.max(0.1, f.toCenter);
+  const zUsed = new Float32Array(W * H);
+  const pos = [], uvs = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const idx = y * W + x;
+    const zRaw = depth[idx] < INF ? depth[idx] : z0;
+    const z = z0 + (zRaw - z0) * DEPTH_STRENGTH;
+    zUsed[idx] = z;
+    const u = x / (W - 1), v = y / (H - 1);
+    const sx = (u - 0.5) * 2 * tanX, sy = (0.5 - v) * 2 * tanY;
+    pos.push(
+      f.posV.x + f.dirV.x*z + f.rightV.x*sx*z + f.upV.x*sy*z,
+      f.posV.y + f.dirV.y*z + f.rightV.y*sx*z + f.upV.y*sy*z,
+      f.posV.z + f.dirV.z*z + f.rightV.z*sx*z + f.upV.z*sy*z);
+    uvs.push(u, 1 - v);
+  }
+  // connect everything when warp is weak; tear only at big jumps when strong
+  const indices = [], maxJump = R * (0.08 + 0.25 * (1 - DEPTH_STRENGTH));
+  const ok = (a, b, c) => {
+    const za = zUsed[a], zb = zUsed[b], zc = zUsed[c];
+    return Math.max(za, zb, zc) - Math.min(za, zb, zc) < maxJump;
+  };
+  for (let y = 0; y < H - 1; y++) for (let x = 0; x < W - 1; x++) {
+    const i00 = y*W + x, i10 = i00 + 1, i01 = i00 + W, i11 = i01 + 1;
+    if (ok(i00, i10, i01)) indices.push(i00, i10, i01);
+    if (ok(i10, i11, i01)) indices.push(i10, i11, i01);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(indices);
+  return geo;
+}
+function buildTexturedDepthMesh(f, W) {
+  const mat = new THREE.MeshBasicMaterial({ map: getTexture(f), transparent: true,
+    alphaTest: 0.005, depthTest: true, depthWrite: false, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(buildDepthGeometry(f, W), mat);
+  mesh.frustumCulled = false;
+  return mesh;
+}
+// nearest frame to the current view direction, with hysteresis: stay on the
+// current frame unless a candidate is clearly better (avoids edge jitter).
+function bestFrameWithHysteresis() {
+  const view = camera.position.clone().sub(CENTER).normalize();
+  let best = null, bestDot = -2;
+  for (const f of FRAMES) { const d = view.dot(f.fromCenter); if (d > bestDot) { bestDot = d; best = f; } }
+  if (!currentFrame || !best) return best;
+  const curDot = view.dot(currentFrame.fromCenter);
+  return (best.id !== currentFrame.id && bestDot > curDot + SWITCH_MARGIN_DOT) ? best : currentFrame;
+}
+function highlightFrustum(id) {
+  if (!frustumMode) return;
+  for (const f of FRAMES) f.line.material.color.setHex(f.id === id ? 0xffffff : f.line.userData.baseColor);
+}
+function frameInfo(f, extra) {
+  return `\n<b>frame ${f.id}</b> <span class="tag ${f.split}">${f.split}</span>  ${extra}`;
+}
+// mode 1: always one sharp image; no blend, no ghosting.
+function updateImpostorNoBlend() {
+  const next = bestFrameWithHysteresis();
+  if (!next) return '';
+  currentFrame = next; previousFrame = null;
+  placeSlot(slotA, next, 1.0); slotA.visible = true; slotB.visible = false;
+  highlightFrustum(next.id);
+  return frameInfo(next, 'no-blend');
+}
+// mode 2: hold one image; crossfade only during the moment of a switch.
+function switchToFrame(next) {
+  if (!currentFrame) { currentFrame = next; previousFrame = null; return; }
+  if (next.id !== currentFrame.id) { previousFrame = currentFrame; currentFrame = next; switchTime = performance.now(); }
+}
+function updateImpostorTemporalFade() {
+  const next = bestFrameWithHysteresis();
+  if (!next) return '';
+  switchToFrame(next);
+  const t = previousFrame ? clamp((performance.now() - switchTime) / FADE_MS, 0, 1) : 1;
+  const w = t * t * (3 - 2 * t);  // smoothstep
+  if (previousFrame && w < 1) {
+    placeSlot(slotA, previousFrame, 1 - w); placeSlot(slotB, currentFrame, w);
+    slotA.visible = slotB.visible = true;
+  } else {
+    previousFrame = null;
+    placeSlot(slotA, currentFrame, 1.0); slotA.visible = true; slotB.visible = false;
+  }
+  highlightFrustum(currentFrame.id);
+  return frameInfo(currentFrame, `fade ${previousFrame ? w.toFixed(2) : 'off'}`);
+}
+// mode 2: depth-warp projective interpolation. One depth surface (the nearest
+// view's) is textured by projecting the THREE nearest source images onto it via
+// their own intrinsics/extrinsics, then blended by a per-fragment confidence =
+// inverse-angle weight x uv-edge feather. The feather replaces the hard frustum
+// cut so partner coverage fades instead of showing a seam; multiple overlapping
+// views + continuous weights keep the blend boundary smooth and base switches
+// from popping.
+const PW_VERT = `
+varying vec3 vWorld;
+void main(){ vWorld = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+const PW_FRAG = `
+precision highp float;
+uniform sampler2D texA, texB, texC;
+uniform vec3 pA,dA,rA,uvA, pB,dB,rB,uvB, pC,dC,rC,uvC;
+uniform float wA, wB, wC, tanX, tanY, feather;
+varying vec3 vWorld;
+void accum(sampler2D t, vec3 P, vec3 dir, vec3 rt, vec3 up, float w,
+           inout vec3 sumRGB, inout float sumA, inout float sumW){
+  if (w <= 0.0) return;
+  vec3 rel = vWorld - P;
+  float z = dot(rel, dir);
+  if (z <= 0.001) return;
+  float x = dot(rel, rt), y = dot(rel, up);
+  float u = 0.5 + 0.5 * x / (z * tanX);
+  float v = 0.5 - 0.5 * y / (z * tanY);
+  float edge = smoothstep(0.0, feather, u) * smoothstep(0.0, feather, 1.0 - u)
+             * smoothstep(0.0, feather, v) * smoothstep(0.0, feather, 1.0 - v);
+  if (edge <= 0.0) return;
+  vec4 c = texture2D(t, vec2(u, 1.0 - v));
+  float conf = w * edge;
+  float a = c.a * conf;
+  sumRGB += c.rgb * a; sumA += a; sumW += conf;
+}
+void main(){
+  vec3 sumRGB = vec3(0.0); float sumA = 0.0, sumW = 0.0;
+  accum(texA, pA,dA,rA,uvA, wA, sumRGB, sumA, sumW);
+  accum(texB, pB,dB,rB,uvB, wB, sumRGB, sumA, sumW);
+  accum(texC, pC,dC,rC,uvC, wC, sumRGB, sumA, sumW);
+  if (sumA < 0.002) discard;
+  gl_FragColor = vec4(sumRGB / sumA, clamp(sumA / max(sumW, 1e-4), 0.0, 1.0));
+}`;
+function makeWarpMaterial() {
+  const v3 = () => new THREE.Vector3();
+  const u = { tanX: { value: 1 }, tanY: { value: 1 }, feather: { value: 0.06 } };
+  for (const s of ['A', 'B', 'C']) {
+    u['tex' + s] = { value: null }; u['w' + s] = { value: 0 };
+    u['p' + s] = { value: v3() }; u['d' + s] = { value: v3() };
+    u['r' + s] = { value: v3() }; u['uv' + s] = { value: v3() };
+  }
+  return new THREE.ShaderMaterial({
+    uniforms: u, vertexShader: PW_VERT, fragmentShader: PW_FRAG,
+    transparent: true, depthTest: true, depthWrite: true, side: THREE.DoubleSide,
+  });
+}
+function setWarpView(U, s, f, w) {
+  U['tex' + s].value = getTexture(f); U['w' + s].value = w;
+  U['p' + s].value.copy(f.posV); U['d' + s].value.copy(f.dirV);
+  U['r' + s].value.copy(f.rightV); U['uv' + s].value.copy(f.upV);
+}
+function updateProjectiveWarp() {
+  // top-3 nearest views to the current view direction (textures)
+  const view = camera.position.clone().sub(CENTER).normalize();
+  let t0 = null, t1 = null, t2 = null, d0 = -2, d1 = -2, d2 = -2;
+  for (const f of FRAMES) {
+    const d = view.dot(f.fromCenter);
+    if (d > d0) { t2 = t1; d2 = d1; t1 = t0; d1 = d0; t0 = f; d0 = d; }
+    else if (d > d1) { t2 = t1; d2 = d1; t1 = f; d1 = d; }
+    else if (d > d2) { t2 = f; d2 = d; }
+  }
+  if (!t0) return '';
+  t1 = t1 || t0; t2 = t2 || t1;
+  // geometry base: snap to the true nearest at rest (crisp single image),
+  // hysteresis while moving (avoids rebuild thrash).
+  const base = (motion < 0.04) ? t0 : bestFrameWithHysteresis();
+  currentFrame = base;
+  if (base.id !== warpBaseId || !warpMesh) {
+    const geo = buildDepthGeometry(base, DEPTH_W);
+    if (!warpMesh) { warpMat = makeWarpMaterial(); warpMesh = new THREE.Mesh(geo, warpMat); warpMesh.frustumCulled = false; scene.add(warpMesh); }
+    else { warpMesh.geometry.dispose(); warpMesh.geometry = geo; }
+    warpBaseId = base.id;
+  }
+  // inverse-angle weights (continuous handover); 3rd view contributes weakly.
+  // Neighbour views are gated by `motion` -> at rest only the nearest remains,
+  // shown as one sharp image; blending fades in only while orbiting.
+  const fr = [t0, t1, t2], dd = [d0, d1, d2];
+  const raw = fr.map((f, i) => 1 / (Math.acos(clamp(dd[i], -1, 1)) + 0.02));
+  raw[1] *= motion; raw[2] *= motion;
+  // collapse duplicates (when <3 distinct frames) so weight isn't double-counted
+  const seen = new Set();
+  for (let i = 0; i < 3; i++) { if (seen.has(fr[i].id)) raw[i] = 0; else seen.add(fr[i].id); }
+  const sum = raw[0] + raw[1] + raw[2] || 1;
+  const U = warpMat.uniforms;
+  setWarpView(U, 'A', t0, raw[0] / sum);
+  setWarpView(U, 'B', t1, raw[1] / sum);
+  setWarpView(U, 'C', t2, raw[2] / sum);
+  U.tanX.value = Math.tan(FOVX / 2); U.tanY.value = U.tanX.value * ASPECT;
+  warpMesh.visible = true;
+  highlightFrustum(base.id);
+  return frameInfo(base, `warp ${(raw[0]/sum).toFixed(2)}/${(raw[1]/sum).toFixed(2)}/${(raw[2]/sum).toFixed(2)}`);
+}
+function updateTexturedSurface(opacityMul) {
+  const [b1, b2, d1, d2] = pickTwo();
+  if (!b1) return '';
+  const a1 = Math.acos(clamp(d1, -1, 1)), a2 = b2 ? Math.acos(clamp(d2, -1, 1)) : 0;
+  const w2 = b2 && (a1 + a2) > 1e-6 ? a1 / (a1 + a2) : 0;
+  if (b1.id !== texMeshAId) {
+    if (texMeshA) { scene.remove(texMeshA); texMeshA.geometry.dispose(); texMeshA.material.dispose(); }
+    texMeshA = buildTexturedDepthMesh(b1, DEPTH_W); texMeshA.renderOrder = 10; scene.add(texMeshA); texMeshAId = b1.id;
+  }
+  texMeshA.visible = true; texMeshA.material.opacity = (1 - w2) * opacityMul;
+  if (b2 && w2 > 0.01) {
+    if (b2.id !== texMeshBId) {
+      if (texMeshB) { scene.remove(texMeshB); texMeshB.geometry.dispose(); texMeshB.material.dispose(); }
+      texMeshB = buildTexturedDepthMesh(b2, DEPTH_W); texMeshB.renderOrder = 11; scene.add(texMeshB); texMeshBId = b2.id;
+    }
+    texMeshB.visible = true; texMeshB.material.opacity = w2 * opacityMul;
+  } else if (texMeshB) texMeshB.visible = false;
+  if (frustumMode) for (const f of FRAMES)
+    f.line.material.color.setHex(f.id === b1.id ? 0xffffff : f.line.userData.baseColor);
+  return `\n<b>frame ${b1.id}</b> <span class="tag ${b1.split}">${b1.split}</span>  fade ${w2.toFixed(2)}`;
+}
+
+// --- frustums (F overlay) -----------------------------------------------------
+function buildFrustums() {
+  frustumGroup = new THREE.Group(); frustumGroup.visible = false;
+  const halfX = Math.tan(FOVX / 2), d = R * 0.1;
+  for (const f of FRAMES) {
+    const hw = d * halfX, hh = hw * ASPECT, apex = f.posV;
+    const c = f.dirV.clone().multiplyScalar(d);
+    const rx = f.rightV.clone().multiplyScalar(hw), uy = f.upV.clone().multiplyScalar(hh);
+    const tl = apex.clone().add(c).add(uy).sub(rx), tr = apex.clone().add(c).add(uy).add(rx);
+    const br = apex.clone().add(c).sub(uy).add(rx), bl = apex.clone().add(c).sub(uy).sub(rx);
+    const pts = [apex,tl, apex,tr, apex,br, apex,bl, tl,tr, tr,br, br,bl, bl,tl];
+    const g = new THREE.BufferGeometry().setFromPoints(pts);
+    const baseColor = f.split === 'test' ? 0xff5555 : 0x4488ff;
+    const line = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: baseColor }));
+    line.userData = { baseColor }; f.line = line; frustumGroup.add(line);
+  }
+  const sph = new THREE.Mesh(new THREE.SphereGeometry(R * 0.015, 12, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffcc00 }));
+  sph.position.copy(CENTER); frustumGroup.add(sph);
+  scene.add(frustumGroup);
+}
+
+// --- interaction --------------------------------------------------------------
+const texOK = () => GDATA && IMPOSTORS;
+function onKey(e) {
+  const k = e.key.toLowerCase();
+  if (k === '1') mode = IMPOSTORS ? 1 : mode;
+  else if (k === '2') mode = texOK() ? 2 : mode;
+  else if (k === '3') mode = IMPOSTORS ? 3 : mode;
+  else if (k === '4') mode = gaussianMesh ? 4 : mode;
+  else if (k === '5') mode = texOK() ? 5 : mode;
+  else if (k === '6') mode = texOK() ? 6 : mode;
+  else if (k === 'n') { if (NIR_OK) { MODALITY = MODALITY === 'rgb' ? 'nir' : 'rgb'; invalidateMeshes(); } }
+  else if (k === 'f') { frustumMode = !frustumMode; frustumGroup.visible = frustumMode; }
+  else if (k === '[') { K = Math.max(0.2, K / 1.15); invalidateMeshes(); }
+  else if (k === ']') { K = Math.min(5, K * 1.15); invalidateMeshes(); }
+  else if (k === ',') { DEPTH_STRENGTH = Math.max(0, DEPTH_STRENGTH - 0.05); invalidateMeshes(); }
+  else if (k === '.') { DEPTH_STRENGTH = Math.min(1, DEPTH_STRENGTH + 0.05); invalidateMeshes(); }
+  else return;
+  applyMode();
+}
+function applyMode() {
+  const useImp = (mode === 1 || mode === 3) && IMPOSTORS;   // slot impostor (no-blend, fade)
+  const useWarp = (mode === 2) && texOK();                  // projective depth-warp
+  const useTex = (mode === 5 || mode === 6) && texOK();     // tex-surf debug
+  if (gaussianMesh) {
+    gaussianMesh.visible = (mode === 4 || mode === 6);       // 4 GS debug, 6 faint under tex
+    const u = gaussianMesh.material.uniforms;
+    u.uK.value = (mode === 6) ? K * 0.55 : K;
+    u.uAlphaMul.value = (mode === 6) ? 0.35 : 1.0;
+  }
+  slotA.material.depthTest = slotB.material.depthTest = true;
+  if (!useImp) { slotA.visible = slotB.visible = false; }
+  if (warpMesh) warpMesh.visible = useWarp;
+  if (!useTex) { if (texMeshA) texMeshA.visible = false; if (texMeshB) texMeshB.visible = false; }
+  // currentFrame is shared by no-blend/fade(slots) and warp(base); reset only
+  // when leaving all of them so re-entry re-inits cleanly.
+  if (!useImp && !useWarp) { currentFrame = previousFrame = null; }
+}
+
+function update() {
+  // motion factor: ramp up fast when the camera moves, decay slowly at rest
+  const moved = camera.position.distanceTo(lastCamPos) > R * 2e-4;
+  lastCamPos.copy(camera.position);
+  motion += ((moved ? 1 : 0) - motion) * (moved ? 0.6 : 0.06);
+  if (motion < 0.005) motion = 0;
+  let info = '';
+  if (mode === 1 && IMPOSTORS) info = updateImpostorNoBlend();
+  else if (mode === 2 && texOK()) info = updateProjectiveWarp();
+  else if (mode === 3 && IMPOSTORS) info = updateImpostorTemporalFade();
+  else if ((mode === 5 || mode === 6) && texOK()) info = updateTexturedSurface(1.0);
+  // mode 4 (Gaussian) has nothing per-frame
+  const M = ['', 'impostor no-blend', 'depth-warp interp', 'impostor temporal-fade',
+             'Gaussian (debug)', 'tex-surf (debug)', 'tex+GS (debug)'][mode];
+  const td = (mode === 2 || mode === 5 || mode === 6) ? `   depth ${DEPTH_STRENGTH.toFixed(2)}` : '';
+  const tag = m => (mode === m ? 'on' : 'off');
+  const modTag = `[N]<span class="${MODALITY==='nir'?'on':'off'}">${MODALITY.toUpperCase()}</span>`;
+  hud.innerHTML =
+    `<b>${M}</b>   frames ${FRAMES.length}   size ${K.toFixed(2)}${td}   ${NIR_OK ? modTag : ''}\n` +
+    `[1]<span class="${tag(1)}">no-blend</span> ` +
+    `[2]<span class="${tag(2)}">depth-warp</span> ` +
+    `[3]<span class="${tag(3)}">fade</span>\n` +
+    `<span class="off">debug</span> [4]<span class="${tag(4)}">GS</span> ` +
+    `[5]<span class="${tag(5)}">tex</span> ` +
+    `[6]<span class="${tag(6)}">tex+GS</span>\n` +
+    `[F]<span class="${frustumMode?'on':'off'}">frustum</span>  [ ] size` +
+    `${(mode===2||mode===5||mode===6)?'  [,][.] depth':''}  drag쨌wheel` +
+    info;
+}
+
+function resize() {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+}
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  update();
+  renderer.render(scene, camera);
+}
+</script>
+</body>
+</html>
+
+
+

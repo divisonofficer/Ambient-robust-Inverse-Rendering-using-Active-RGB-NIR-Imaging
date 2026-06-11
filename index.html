@@ -1,0 +1,1092 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Project page for Ambient-robust Inverse Rendering using Active RGB-NIR Imaging."
+    />
+    <title>Ambient-robust Inverse Rendering using Active RGB-NIR Imaging</title>
+    <link rel="icon" href="./static/favicon.svg" type="image/svg+xml" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: "#171717",
+              mist: "#f4f7f7",
+              line: "#d9e2e1",
+              teal: "#0f766e",
+              copper: "#b45309",
+            },
+            fontFamily: {
+              sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+              serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-white text-ink antialiased">
+    <header class="border-b border-line bg-mist">
+      <div class="mx-auto max-w-6xl px-5 py-12 sm:py-16 lg:px-8">
+        <div class="mx-auto max-w-4xl text-center">
+          <p class="mb-5 inline-flex items-center rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium text-teal">
+            SIGGRAPH Conference Papers 2026
+          </p>
+          <h1 class="font-serif text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
+            Ambient-robust Inverse Rendering using Active RGB-NIR Imaging
+          </h1>
+          <p class="mt-6 text-lg leading-8 text-neutral-700">
+            We introduce an active RGB-NIR imaging system and a three-stage inverse rendering pipeline that reconstructs accurate geometry and reflectance under diverse ambient illumination.
+          </p>
+        </div>
+
+        <div class="mx-auto mt-8 grid max-w-4xl gap-3 text-center text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <a class="font-medium text-teal hover:text-copper" href="mailto:hgchung@postech.ac.kr">Hoon-Gyu Chung*</a>
+          <a class="font-medium text-teal hover:text-copper" href="mailto:wlssud0701@postech.ac.kr">Jinnyeong Kim*</a>
+          <a class="font-medium text-teal hover:text-copper" href="mailto:cein39296@postech.ac.kr">Hyunwoo Kang</a>
+          <a class="font-medium text-teal hover:text-copper" href="mailto:shwbaek@postech.ac.kr">Seung-Hwan Baek</a>
+        </div>
+        <p class="mt-3 text-center text-sm text-neutral-600">POSTECH · *Equal contribution</p>
+
+        <nav class="mx-auto mt-9 flex max-w-4xl flex-wrap justify-center gap-3" aria-label="Paper links">
+          <a class="rounded-md bg-teal px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal/90" href="./static/pdf/2605.30250v1.pdf">
+            PDF
+          </a>
+          <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal" href="https://doi.org/10.1145/3799902.3811078">
+            DOI
+          </a>
+          <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal" href="./static/videos/inverse-rendering-pipeline.mp4">
+            Pipeline video
+          </a>
+          <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-neutral-500" href="#">
+            Code coming soon
+          </a>
+          <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-neutral-500" href="#">
+            Dataset coming soon
+          </a>
+          <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-neutral-500" href="#">
+            Supplement coming soon
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="bg-white">
+        <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-18">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wide text-copper">Overview</p>
+            <h2 class="mt-3 font-serif text-3xl font-semibold leading-tight sm:text-4xl">
+              Active RGB-NIR imaging for stable inverse rendering
+            </h2>
+            <p class="mt-5 leading-8 text-neutral-700">
+              Existing inverse rendering methods can be sensitive to uncontrolled ambient lighting. This project uses imperceptible NIR flash illumination to obtain stable point-light shading, while RGB images preserve visible-spectrum appearance for downstream rendering.
+            </p>
+            <p class="mt-4 leading-8 text-neutral-700">
+              The method combines multi-view RGB observations, active NIR flash images, and an RGB-NIR BRDF model to recover geometry, roughness, metallic parameters, diffuse albedo, and environment illumination.
+            </p>
+          </div>
+          <figure class="overflow-hidden rounded-lg border border-line bg-mist">
+            <img
+              class="h-full w-full bg-white object-contain"
+              src="./static/images/figure-1-teaser.png"
+              alt="Figure 1 teaser showing the mobile RGB-NIR imaging system, captured observations, reconstructed geometry and reflectance, and relighting results."
+            />
+            <figcaption class="border-t border-line bg-white px-4 py-3 text-sm text-neutral-600">
+              Figure 1: overview of acquisition, reconstruction, and relighting.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="bg-mist">
+        <div class="mx-auto max-w-6xl px-5 py-14 lg:px-8">
+          <div class="max-w-3xl">
+            <p class="text-sm font-semibold uppercase tracking-wide text-copper">Pipeline</p>
+            <h2 class="mt-3 font-serif text-3xl font-semibold">RGB-NIR inverse rendering pipeline</h2>
+            <p class="mt-5 leading-8 text-neutral-700">
+              The pipeline proceeds in three stages: RGB-based geometry initialization, NIR flash inverse rendering for robust geometry and reflectance refinement, and RGB environment inverse rendering for visible diffuse albedo and illumination recovery.
+            </p>
+          </div>
+          <div class="mt-9 grid gap-4 md:grid-cols-3">
+            <article class="rounded-lg border border-line bg-white p-5">
+              <p class="text-sm font-semibold text-teal">Stage 1</p>
+              <h3 class="mt-2 text-xl font-semibold">RGB initialization</h3>
+              <p class="mt-3 text-sm leading-6 text-neutral-700">
+                Initialize object geometry from multi-view RGB images under natural ambient lighting.
+              </p>
+            </article>
+            <article class="rounded-lg border border-line bg-white p-5">
+              <p class="text-sm font-semibold text-teal">Stage 2</p>
+              <h3 class="mt-2 text-xl font-semibold">NIR flash rendering</h3>
+              <p class="mt-3 text-sm leading-6 text-neutral-700">
+                Use flash-only NIR measurements to refine geometry and estimate NIR reflectance.
+              </p>
+            </article>
+            <article class="rounded-lg border border-line bg-white p-5">
+              <p class="text-sm font-semibold text-teal">Stage 3</p>
+              <h3 class="mt-2 text-xl font-semibold">RGB environment rendering</h3>
+              <p class="mt-3 text-sm leading-6 text-neutral-700">
+                Recover RGB diffuse albedo and ambient environment maps using the refined reconstruction.
+              </p>
+            </article>
+          </div>
+          <figure class="mt-8 overflow-hidden rounded-lg border border-line bg-black">
+            <video
+              class="w-full"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="auto"
+              poster="./static/images/pipeline-video-poster.jpg"
+            >
+              <source src="./static/videos/inverse-rendering-pipeline.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </figure>
+          <figure class="mt-8 overflow-hidden rounded-lg border border-line bg-white">
+            <img
+              class="w-full bg-white object-contain"
+              src="./static/images/figure-4-pipeline.png"
+              alt="Figure 4 pipeline showing the three-stage RGB-NIR inverse rendering process."
+            />
+            <figcaption class="border-t border-line bg-white px-4 py-3 text-sm text-neutral-600">
+              Figure 4: three-stage RGB-NIR inverse rendering pipeline, rebuilt from extracted paper panels.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="bg-white">
+        <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wide text-copper">System</p>
+            <h2 class="mt-3 font-serif text-3xl font-semibold">Imaging system design</h2>
+            <p class="mt-5 leading-8 text-neutral-700">
+              The acquisition platform combines a mobile base, robotic arm, pixel-aligned RGB-NIR camera, and synchronized NIR flash. The system scans objects from dense viewpoints while keeping NIR illumination largely invisible to human observers.
+            </p>
+          </div>
+          <figure class="overflow-hidden rounded-lg border border-line bg-black">
+            <video
+              class="aspect-[16/10] h-full w-full object-cover"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="auto"
+            >
+              <source src="./static/videos/robot-imaging-system-capturing.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </figure>
+        </div>
+      </section>
+
+      <section class="bg-mist">
+        <div class="mx-auto max-w-6xl px-5 py-14 lg:px-8">
+          <div class="max-w-3xl">
+            <p class="text-sm font-semibold uppercase tracking-wide text-copper">Dataset</p>
+            <h2 class="mt-3 font-serif text-3xl font-semibold">Acquired RGB-NIR inverse rendering dataset</h2>
+            <p class="mt-5 leading-8 text-neutral-700">
+              The dataset contains multi-view RGB-NIR image pairs with active NIR flash under multiple ambient illumination conditions, together with a synthetic counterpart rendered to match the acquisition setup.
+            </p>
+          </div>
+          <div class="mt-9 max-w-xl">
+            <article class="overflow-hidden rounded-lg border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <button
+                type="button"
+                class="block w-full text-left focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2"
+                data-open-dataset="synthetic"
+              >
+                <div class="grid aspect-[16/9] grid-cols-4 gap-1 bg-neutral-100 p-3">
+                  <div class="rounded bg-[url('./static/images/page-04-Image6.png')] bg-cover bg-center"></div>
+                  <div class="rounded bg-[url('./static/images/page-04-Image12.png')] bg-cover bg-center"></div>
+                  <div class="rounded bg-[url('./static/images/page-04-Image64.png')] bg-cover bg-center"></div>
+                  <div class="rounded bg-[url('./static/images/page-04-Image77.png')] bg-cover bg-center"></div>
+                </div>
+              </button>
+              <div class="p-5">
+                <h3 class="text-xl font-semibold">Synthetic dataset</h3>
+                <p class="mt-3 text-sm leading-6 text-neutral-700">
+                  Controlled synthetic evaluation data rendered with Mitsuba-style acquisition geometry and material variation.
+                </p>
+                <button
+                  type="button"
+                  class="mt-4 text-sm font-semibold text-teal hover:text-copper"
+                  data-open-dataset="synthetic"
+                >
+                  Explore synthetic thumbnails
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="real-dataset-gallery" class="bg-mist">
+        <div class="mx-auto max-w-6xl px-5 pb-14 lg:px-8">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h3 class="text-xl font-semibold">Real-world 3D dataset gallery</h3>
+                  <p class="mt-1 text-sm leading-6 text-neutral-600">
+                    Four objects and fourteen ambient scenes, shown as pixel-aligned RGB/NIR depth-warp views.
+                  </p>
+                </div>
+                <div>
+                  <p class="mb-2 text-right text-sm font-semibold text-teal">14 assets</p>
+                  <div class="inline-flex rounded-md border border-line bg-mist p-1" aria-label="Real dataset view mode">
+                    <button type="button" class="real-view-mode rounded px-3 py-1.5 text-sm font-semibold" data-real-view-mode="rgb">RGB</button>
+                    <button type="button" class="real-view-mode rounded px-3 py-1.5 text-sm font-semibold" data-real-view-mode="nir">NIR</button>
+                    <button type="button" class="real-view-mode rounded px-3 py-1.5 text-sm font-semibold" data-real-view-mode="split">Split</button>
+                  </div>
+                </div>
+              </div>
+              <div id="real-gallery-file-warning" class="mt-5 hidden rounded-lg border border-line bg-mist px-4 py-4 text-sm leading-6 text-neutral-700">
+                The 3D viewer uses ES modules and fetch-based assets, so browsers block it from direct file:// pages. It works on HTTP/HTTPS static hosting such as GitHub Pages.
+              </div>
+              <div id="real-gallery-grid" class="mt-5"></div>
+        </div>
+      </section>
+
+
+      <div
+        id="dataset-modal"
+        class="fixed inset-0 z-50 hidden bg-black/70 px-4 py-5 backdrop-blur-sm sm:px-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dataset-modal-title"
+      >
+        <div class="mx-auto flex max-h-full max-w-7xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
+          <div class="border-b border-line px-5 py-4 sm:px-6">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-wide text-copper">Dataset browser</p>
+                <h2 id="dataset-modal-title" class="mt-1 font-serif text-2xl font-semibold sm:text-3xl">
+                  RGB-NIR paired thumbnails
+                </h2>
+              </div>
+              <button
+                id="close-dataset-modal"
+                type="button"
+                class="grid h-10 w-10 flex-none place-items-center rounded-md border border-line text-xl leading-none text-neutral-600 hover:border-teal hover:text-teal focus:outline-none focus:ring-2 focus:ring-teal"
+                aria-label="Close dataset browser"
+              >
+                X
+              </button>
+            </div>
+            <div class="mt-5">
+              <div class="inline-flex w-fit rounded-md border border-line bg-mist p-1" aria-label="Dataset domain">
+                <button
+                  type="button"
+                  class="dataset-domain rounded px-4 py-2 text-sm font-semibold"
+                  data-domain="real"
+                >
+                  Real-world
+                </button>
+                <button
+                  type="button"
+                  class="dataset-domain rounded px-4 py-2 text-sm font-semibold"
+                  data-domain="synthetic"
+                >
+                  Synthetic
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overflow-y-auto px-5 py-5 sm:px-6">
+            <section id="synthetic-dataset-browser" class="hidden">
+            <div id="dataset-object-tabs" class="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Dataset objects"></div>
+            <div class="mt-5 flex items-center justify-between gap-4">
+              <div>
+                <h3 id="dataset-object-title" class="text-xl font-semibold">Object 1</h3>
+                <p id="dataset-object-description" class="mt-1 text-sm text-neutral-600">
+                  Four ambient scenes with pixel-aligned RGB and NIR observations.
+                </p>
+              </div>
+              <p class="hidden text-sm text-neutral-500 sm:block">4 scenes · RGB/NIR pair</p>
+            </div>
+            <section id="real-3d-viewer-panel" class="mt-5 overflow-hidden rounded-lg border border-line bg-neutral-950 text-white">
+              <div class="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h4 class="font-semibold">3D rotate viewer</h4>
+                  <p id="real-3d-viewer-label" class="mt-1 text-sm text-neutral-400">
+                    Real-world object and scene viewer
+                  </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="inline-flex rounded-md border border-white/15 bg-black p-1" aria-label="3D viewer modality">
+                    <button type="button" class="viewer-modality rounded px-3 py-1.5 text-sm font-semibold" data-viewer-modality="rgb">
+                      RGB
+                    </button>
+                    <button type="button" class="viewer-modality rounded px-3 py-1.5 text-sm font-semibold" data-viewer-modality="nir">
+                      NIR
+                    </button>
+                  </div>
+                  <a
+                    id="real-3d-viewer-link"
+                    class="text-sm font-semibold text-teal hover:text-white"
+                    href="./static/viewers/real-dataset-3d/cat_A/index.html"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open standalone
+                  </a>
+                </div>
+              </div>
+              <div
+                id="real-3d-viewer-container"
+                class="h-[420px] w-full bg-black sm:h-[520px]"
+                aria-label="Integrated real-world RGB-NIR 3D rotate dataset viewer"
+              ></div>
+              <div id="real-3d-file-warning" class="hidden border-t border-white/10 bg-black px-4 py-4 text-sm leading-6 text-neutral-300">
+                The 3D viewer uses ES modules and fetch-based assets, so browsers block it from direct file:// pages. It works on HTTP/HTTPS static hosting such as GitHub Pages.
+              </div>
+            </section>
+            <div
+              id="dataset-scene-grid"
+              class="mt-5 flex snap-x gap-4 overflow-x-auto pb-3 lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0"
+            ></div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="real-viewer-modal"
+        class="fixed inset-0 z-[60] hidden grid place-items-center bg-black/70 px-4 py-5 backdrop-blur-sm sm:px-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="real-viewer-title"
+      >
+        <div class="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-neutral-950 text-white shadow-2xl">
+          <div class="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-wide text-teal">3D inspector</p>
+              <h3 id="real-viewer-title" class="mt-1 text-2xl font-semibold">Real-world scene</h3>
+            </div>
+            <button
+              id="close-real-viewer-modal"
+              type="button"
+              class="grid h-10 w-10 flex-none place-items-center rounded-md border border-white/15 text-xl leading-none text-neutral-300 hover:border-teal hover:text-white focus:outline-none focus:ring-2 focus:ring-teal"
+              aria-label="Close 3D inspector"
+            >
+              X
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-3">
+            <p id="real-viewer-subtitle" class="text-sm text-neutral-400">RGB/NIR depth-warp viewer</p>
+            <div class="inline-flex rounded-md border border-white/15 bg-black p-1" aria-label="Inspector modality">
+              <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="rgb">RGB</button>
+              <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="nir">NIR</button>
+            </div>
+          </div>
+          <div id="real-viewer-container" class="h-[52vh] max-h-[560px] min-h-[320px] w-full bg-black"></div>
+          <div id="real-viewer-file-warning" class="hidden border-t border-white/10 bg-black px-5 py-4 text-sm leading-6 text-neutral-300">
+            The 3D viewer requires HTTP/HTTPS static hosting.
+          </div>
+        </div>
+      </div>
+
+      <section class="bg-white">
+        <div class="mx-auto max-w-6xl px-5 py-14 lg:px-8">
+          <div class="max-w-3xl">
+            <p class="text-sm font-semibold uppercase tracking-wide text-copper">Results</p>
+            <h2 class="mt-3 font-serif text-3xl font-semibold">Reconstruction results</h2>
+            <p class="mt-5 leading-8 text-neutral-700">
+              Result panels are prepared for method comparisons, ambient-robust reconstruction examples, relighting outputs, and ablation studies.
+            </p>
+          </div>
+          <div class="mt-10 space-y-14">
+            <article>
+              <h3 class="text-xl font-semibold">Experiment 1: Passive RGB comparison</h3>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
+                Slot for comparison against passive RGB inverse rendering baselines.
+              </p>
+              <figure class="mt-5 grid aspect-video place-items-center bg-mist p-6 text-center">
+                <p class="text-sm leading-6 text-neutral-600">Experiment 1 media placeholder</p>
+              </figure>
+            </article>
+            <article>
+              <h3 class="text-xl font-semibold">Experiment 2: Ambient robustness</h3>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
+                Slot for reconstruction consistency across environment maps and illumination changes.
+              </p>
+              <figure class="mt-5 grid aspect-video place-items-center bg-mist p-6 text-center">
+                <p class="text-sm leading-6 text-neutral-600">Experiment 2 media placeholder</p>
+              </figure>
+            </article>
+            <article>
+              <h3 class="text-xl font-semibold">Experiment 3: Relighting and ablation</h3>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
+                Point-light relighting on reconstructed objects demonstrates recovered geometry and reflectance quality.
+              </p>
+              <figure class="mt-5 bg-black">
+                <video
+                  class="aspect-video w-full object-cover"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  preload="auto"
+                >
+                  <source src="./static/videos/experiment_relighting_pointlight.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </figure>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="border-t border-line bg-neutral-950 text-white">
+        <div class="mx-auto max-w-6xl px-5 py-14 lg:px-8">
+          <p class="text-sm font-semibold uppercase tracking-wide text-teal">Citation</p>
+          <div class="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <h2 class="font-serif text-3xl font-semibold">BibTeX</h2>
+            <div class="flex items-center gap-3">
+              <span id="copy-status" class="text-sm text-neutral-400" aria-live="polite"></span>
+              <button
+                id="copy-bibtex"
+                type="button"
+                class="rounded-md border border-white/15 bg-white px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 focus:ring-offset-neutral-950"
+              >
+                Copy BibTeX
+              </button>
+            </div>
+          </div>
+          <pre class="mt-6 overflow-x-auto rounded-lg border border-white/10 bg-black p-5 text-sm leading-6 text-neutral-200"><code id="bibtex-code">@inproceedings{chung2026ambient,
+  title     = {Ambient-robust Inverse Rendering using Active RGB-NIR Imaging},
+  author    = {Chung, Hoon-Gyu and Kim, Jinnyeong and Kang, Hyunwoo and Baek, Seung-Hwan},
+  booktitle = {SIGGRAPH Conference Papers},
+  year      = {2026},
+  doi       = {10.1145/3799902.3811078}
+}</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-white">
+      <div class="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+        <p>Ambient-robust Inverse Rendering using Active RGB-NIR Imaging</p>
+        <p>Static project page for GitHub Pages.</p>
+      </div>
+    </footer>
+    <script>
+      const copyButton = document.getElementById("copy-bibtex");
+      const copyStatus = document.getElementById("copy-status");
+      const bibtexCode = document.getElementById("bibtex-code");
+
+      copyButton?.addEventListener("click", async () => {
+        const bibtex = bibtexCode?.textContent?.trim() ?? "";
+
+        try {
+          await navigator.clipboard.writeText(bibtex);
+          copyStatus.textContent = "Copied";
+          copyButton.textContent = "Copied";
+        } catch {
+          copyStatus.textContent = "Select and copy manually";
+          copyButton.textContent = "Copy failed";
+        }
+
+        window.setTimeout(() => {
+          copyStatus.textContent = "";
+          copyButton.textContent = "Copy BibTeX";
+        }, 1800);
+      });
+
+      const datasetModal = document.getElementById("dataset-modal");
+      const datasetTitle = document.getElementById("dataset-modal-title");
+      const closeDatasetModal = document.getElementById("close-dataset-modal");
+      const datasetDomainButtons = document.querySelectorAll(".dataset-domain");
+      const syntheticDatasetBrowser = document.getElementById("synthetic-dataset-browser");
+      const realDatasetGallery = document.getElementById("real-dataset-gallery");
+      const realGalleryGrid = document.getElementById("real-gallery-grid");
+      const realGalleryFileWarning = document.getElementById("real-gallery-file-warning");
+      const realViewModeButtons = document.querySelectorAll(".real-view-mode");
+      const realViewerModal = document.getElementById("real-viewer-modal");
+      const closeRealViewerModal = document.getElementById("close-real-viewer-modal");
+      const realViewerTitle = document.getElementById("real-viewer-title");
+      const realViewerSubtitle = document.getElementById("real-viewer-subtitle");
+      const realViewerContainer = document.getElementById("real-viewer-container");
+      const realViewerFileWarning = document.getElementById("real-viewer-file-warning");
+      const inspectorModalityButtons = document.querySelectorAll(".inspector-modality");
+      const datasetObjectTabs = document.getElementById("dataset-object-tabs");
+      const datasetObjectTitle = document.getElementById("dataset-object-title");
+      const datasetObjectDescription = document.getElementById("dataset-object-description");
+      const datasetSceneGrid = document.getElementById("dataset-scene-grid");
+      const legacyReal3dPanel = document.getElementById("real-3d-viewer-panel");
+      const canEmbed3dViewer = window.location.protocol === "http:" || window.location.protocol === "https:";
+      const maxActiveViewers = 4;
+      let real3dViewerModulePromise = null;
+      let realGalleryObserver = null;
+      const realGalleryViewers = new Map();
+      const activeViewerOrder = [];
+      const mountingViewerIds = new Set();
+      let realGalleryMode = "rgb";
+      let realGallerySplitTop = 0.5;
+      let inspectorViewer = null;
+      let inspectorScene = null;
+      let inspectorModality = "rgb";
+      const realSharedOrbit = {
+        yaw: 0,
+        pitch: Math.PI * 0.48,
+        dragging: false,
+        lastX: 0,
+        lastY: 0,
+      };
+
+      const datasetFallbacks = {
+        syntheticRgb: [
+          "./static/images/page-04-Image6.png",
+          "./static/images/page-04-Image12.png",
+          "./static/images/page-04-Image64.png",
+          "./static/images/page-04-Image77.png",
+        ],
+        syntheticNir: [
+          "./static/images/page-04-Image10.png",
+          "./static/images/page-04-Image71.png",
+          "./static/images/page-04-Image73.png",
+          "./static/images/page-04-Image75.png",
+        ],
+        env: [
+          "./static/images/page-04-Image55.png",
+          "./static/images/page-04-Image57.png",
+          "./static/images/page-04-Image50.png",
+          "./static/images/page-04-Image53.png",
+        ],
+      };
+
+      const datasetState = {
+        domain: "real",
+        objectIndex: 0,
+      };
+
+      const datasetDomains = {
+        real: {
+          title: "Real-world RGB-NIR 3D dataset",
+        },
+        synthetic: {
+          label: "Synthetic",
+          title: "Synthetic RGB-NIR dataset",
+          description: "Rendered RGB-NIR pairs matched to the acquisition setup.",
+          rgb: datasetFallbacks.syntheticRgb,
+          nir: datasetFallbacks.syntheticNir,
+        },
+      };
+
+      const syntheticObjects = ["Object 1", "Object 2", "Object 3"];
+      const syntheticScenes = [
+        { label: "Scene 1" },
+        { label: "Scene 2" },
+        { label: "Scene 3" },
+        { label: "Scene 4" },
+      ];
+
+      const realDatasetGroups = [
+        { label: "Cat", scenes: ["A", "C", "F", "K"], prefix: "cat" },
+        { label: "Nefertiti", scenes: ["A", "C", "F", "K"], prefix: "nerfititi" },
+        { label: "Tiger", scenes: ["A", "C", "F", "K"], prefix: "tiger" },
+        { label: "Owl", scenes: ["L", "N"], prefix: "owl" },
+      ];
+
+      const realBoardColumns = ["View 1", "View 2", "View 3", "View 4"];
+
+      const realDatasetScenes = realDatasetGroups.flatMap((group) =>
+        group.scenes.map((scene) => ({
+          object: group.label,
+          scene,
+          folder: `${group.prefix}_${scene}`,
+        }))
+      );
+
+      const realPreviewStems = {
+        cat_A: "16_11_23_959",
+        cat_C: "16_08_40_625",
+        cat_F: "15_46_16_479",
+        cat_K: "12_35_03_952",
+        nerfititi_A: "17_07_37_242",
+        nerfititi_C: "16_40_19_152",
+        nerfititi_F: "14_12_15_209",
+        nerfititi_K: "13_07_53_744",
+        owl_L: "11_30_54_942",
+        owl_N: "12_14_43_193",
+        tiger_A: "18_05_33_602",
+        tiger_C: "17_11_35_720",
+        tiger_F: "16_03_31_459",
+        tiger_K: "13_33_49_414",
+      };
+
+      function imageFor(pool, objectIndex, sceneIndex) {
+        return pool[(objectIndex + sceneIndex) % pool.length];
+      }
+
+      function setDomainStyles() {
+        datasetDomainButtons.forEach((button) => {
+          const active = button.dataset.domain === datasetState.domain;
+          button.classList.toggle("bg-white", active);
+          button.classList.toggle("text-teal", active);
+          button.classList.toggle("shadow-sm", active);
+          button.classList.toggle("text-neutral-600", !active);
+        });
+      }
+
+      function showDatasetMode() {
+        const isReal = datasetState.domain === "real";
+        syntheticDatasetBrowser?.classList.toggle("hidden", isReal);
+        legacyReal3dPanel?.classList.add("hidden");
+        datasetTitle.textContent = datasetDomains[datasetState.domain].title;
+      }
+
+      function renderSyntheticObjectTabs() {
+        if (!datasetObjectTabs) return;
+        datasetObjectTabs.innerHTML = syntheticObjects
+          .map((label, index) => {
+            const active = index === datasetState.objectIndex;
+            return `<button
+              type="button"
+              class="dataset-object-tab flex-none rounded-md border px-4 py-2 text-sm font-semibold ${
+                active
+                  ? "border-teal bg-teal text-white"
+                  : "border-line bg-white text-neutral-700 hover:border-teal hover:text-teal"
+              }"
+              data-object-index="${index}"
+              role="tab"
+              aria-selected="${active}"
+            >${label}</button>`;
+          })
+          .join("");
+      }
+
+      function renderSyntheticSceneGrid() {
+        const domain = datasetDomains.synthetic;
+        if (!datasetSceneGrid) return;
+
+        datasetObjectTitle.textContent = syntheticObjects[datasetState.objectIndex];
+        datasetObjectDescription.textContent = domain.description;
+        datasetSceneGrid.innerHTML = syntheticScenes
+          .map((scene, sceneIndex) => {
+            const futureBase = `./static/images/dataset/synthetic/object-${datasetState.objectIndex + 1}/scene-${sceneIndex + 1}`;
+            const rgb = imageFor(domain.rgb, datasetState.objectIndex, sceneIndex);
+            const nir = imageFor(domain.nir, datasetState.objectIndex, sceneIndex);
+            const env = imageFor(datasetFallbacks.env, datasetState.objectIndex, sceneIndex);
+
+            return `<article class="w-[82vw] flex-none snap-center overflow-hidden rounded-lg border border-line bg-white shadow-sm sm:w-[22rem] lg:w-auto">
+              <div class="dataset-split relative aspect-[4/3] cursor-ns-resize overflow-hidden bg-neutral-100" style="--split-y: 50%;">
+                <img class="absolute inset-0 h-full w-full object-cover" src="${rgb}" alt="Synthetic ${syntheticObjects[datasetState.objectIndex]} ${scene.label} RGB preview" data-future-src="${futureBase}-rgb.jpg" />
+                <img class="absolute inset-0 h-full w-full object-cover" style="clip-path: inset(var(--split-y) 0 0 0);" src="${nir}" alt="Synthetic ${syntheticObjects[datasetState.objectIndex]} ${scene.label} NIR preview" data-future-src="${futureBase}-nir.jpg" />
+                <div class="pointer-events-none absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)]" style="top: var(--split-y);"></div>
+                <div class="pointer-events-none absolute left-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-black/70 text-sm font-semibold text-white shadow" style="top: var(--split-y);">↕</div>
+                <div class="absolute left-3 top-3 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white">RGB</div>
+                <div class="absolute bottom-3 left-3 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white">NIR</div>
+                <div class="absolute bottom-3 right-3 overflow-hidden rounded-full border border-white/70 bg-white p-1 shadow">
+                  <img class="h-12 w-12 rounded-full object-cover" src="${env}" alt="${scene.label} environment preview" data-future-src="${futureBase}-env.jpg" />
+                </div>
+              </div>
+              <div class="p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <h4 class="font-semibold">${scene.label}</h4>
+                  <span class="rounded-full bg-mist px-2 py-1 text-xs font-semibold text-teal">Env ${sceneIndex + 1}</span>
+                </div>
+                <p class="mt-2 text-sm leading-6 text-neutral-600">
+                  ${syntheticObjects[datasetState.objectIndex]} under ambient condition ${sceneIndex + 1}.
+                </p>
+              </div>
+            </article>`;
+          })
+          .join("");
+      }
+
+      function disposeRealGalleryViewers() {
+        realGalleryObserver?.disconnect();
+        realGalleryObserver = null;
+        activeViewerOrder.length = 0;
+        mountingViewerIds.clear();
+        for (const entry of realGalleryViewers.values()) {
+          entry.viewer?.dispose();
+        }
+        realGalleryViewers.clear();
+      }
+
+      async function ensureRealGalleryViewer(card) {
+        const id = card.dataset.viewerId;
+        const entry = realGalleryViewers.get(id);
+        if (!entry || entry.viewer) return entry?.viewer || null;
+        if (mountingViewerIds.has(id)) return null;
+        mountingViewerIds.add(id);
+
+        try {
+          real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=texture-queue-1");
+          const module = await real3dViewerModulePromise;
+          if (!realGalleryViewers.has(id)) return null;
+
+          entry.viewer = module.mountDatasetViewer({
+            container: entry.container,
+            basePath: entry.basePath,
+          });
+          applyRealViewerMode(entry);
+          applyRealViewerOrbit(entry);
+          markViewerActive(id);
+          return entry.viewer;
+        } finally {
+          mountingViewerIds.delete(id);
+        }
+      }
+
+      function setRealViewModeStyles() {
+        realViewModeButtons.forEach((button) => {
+          const active = button.dataset.realViewMode === realGalleryMode;
+          button.classList.toggle("bg-white", active);
+          button.classList.toggle("text-teal", active);
+          button.classList.toggle("shadow-sm", active);
+          button.classList.toggle("text-neutral-600", !active);
+        });
+      }
+
+      function applyRealViewerMode(entry) {
+        if (!entry?.viewer) return;
+        entry.viewer.setModality(realGalleryMode === "nir" ? "nir" : "rgb");
+        entry.viewer.setRgbNirSplit(realGalleryMode === "split" ? realGallerySplitTop : null);
+      }
+
+      function applyRealViewerOrbit(entry) {
+        entry?.viewer?.setSharedOrbit?.(realSharedOrbit.yaw, realSharedOrbit.pitch);
+      }
+
+      function applyRealGalleryOrbit() {
+        realGalleryViewers.forEach((entry) => applyRealViewerOrbit(entry));
+      }
+
+      function applyRealGalleryMode() {
+        setRealViewModeStyles();
+        realGalleryGrid?.classList.toggle("is-split-mode", realGalleryMode === "split");
+        realGalleryGrid?.style.setProperty("--split-y", `${realGallerySplitTop * 100}%`);
+        realGalleryViewers.forEach((entry) => applyRealViewerMode(entry));
+        realGalleryGrid?.querySelectorAll("[data-split-overlay]").forEach((overlay) => {
+          overlay.classList.toggle("opacity-0", realGalleryMode !== "split");
+        });
+        realGalleryGrid?.querySelectorAll("[data-real-card]").forEach((card) => {
+          const nirPreview = card.querySelector("[data-static-nir]");
+          if (!nirPreview) return;
+          if (realGalleryMode === "nir") {
+            nirPreview.style.opacity = "1";
+            nirPreview.style.clipPath = "inset(0 0 0 0)";
+          } else if (realGalleryMode === "split") {
+            nirPreview.style.opacity = "1";
+            nirPreview.style.clipPath = `inset(var(--split-y) 0 0 0)`;
+          } else {
+            nirPreview.style.opacity = "0";
+            nirPreview.style.clipPath = "inset(0 0 0 0)";
+          }
+        });
+      }
+
+      function markViewerActive(id) {
+        const index = activeViewerOrder.indexOf(id);
+        if (index >= 0) activeViewerOrder.splice(index, 1);
+        activeViewerOrder.push(id);
+
+        while (activeViewerOrder.length > maxActiveViewers) {
+          const pauseId = activeViewerOrder.shift();
+          const pauseEntry = realGalleryViewers.get(pauseId);
+          pauseEntry?.viewer?.pause();
+          pauseEntry?.card?.classList.add("opacity-80");
+        }
+      }
+
+      function mountedRealViewerCount() {
+        let count = 0;
+        realGalleryViewers.forEach((entry) => {
+          if (entry.viewer) count += 1;
+        });
+        return count + mountingViewerIds.size;
+      }
+
+      function observeRealGalleryCards() {
+        if (!canEmbed3dViewer || !realGalleryGrid) return;
+        realGalleryObserver?.disconnect();
+        realGalleryObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              const card = entry.target;
+              const id = card.dataset.viewerId;
+              const viewerEntry = realGalleryViewers.get(id);
+              if (!viewerEntry) return;
+
+              if (entry.isIntersecting) {
+                card.classList.remove("opacity-80");
+                if (!viewerEntry.viewer && mountedRealViewerCount() >= maxActiveViewers) {
+                  card.querySelector("[data-viewer-placeholder]").textContent = "";
+                  return;
+                }
+                ensureRealGalleryViewer(card).then((viewer) => {
+                  viewer?.resume();
+                  applyRealViewerMode(viewerEntry);
+                  applyRealViewerOrbit(viewerEntry);
+                  markViewerActive(id);
+                });
+              } else {
+                viewerEntry.viewer?.setRgbNirSplit(null);
+                viewerEntry.viewer?.pause();
+                card.style.setProperty("--split-y", "50%");
+                card.classList.add("opacity-80");
+              }
+            });
+          },
+          { root: null, rootMargin: "320px 0px", threshold: 0.01 }
+        );
+
+        realGalleryGrid.querySelectorAll("[data-real-card]").forEach((card) => {
+          realGalleryObserver.observe(card);
+        });
+      }
+
+      function renderRealGallery() {
+        if (!realGalleryGrid) return;
+        disposeRealGalleryViewers();
+        realGalleryFileWarning?.classList.toggle("hidden", canEmbed3dViewer);
+
+        realGalleryGrid.innerHTML = `<div class="rounded-lg border border-neutral-700 bg-neutral-900 p-2 text-white shadow-sm" data-real-board style="--split-y: ${realGallerySplitTop * 100}%;">
+          <div class="grid grid-cols-[4.75rem_repeat(4,minmax(0,1fr))] gap-px">
+            <div class="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">Object</div>
+            ${realBoardColumns
+              .map((column) => `<div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400">${column}</div>`)
+              .join("")}
+            ${realDatasetGroups
+              .map((group) => {
+                const cells = realBoardColumns
+                  .map((column, sceneIndex) => {
+                    const sceneName = group.scenes[sceneIndex];
+                    const scene = sceneName
+                      ? { object: group.label, scene: sceneName, folder: `${group.prefix}_${sceneName}` }
+                      : null;
+                    if (!scene) {
+                      return `<div class="aspect-[4/3] bg-neutral-800/45"></div>`;
+                    }
+                    return `<div
+                      class="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-neutral-950 focus-within:ring-2 focus-within:ring-teal"
+                      data-real-card
+                      data-viewer-id="${scene.folder}"
+                      tabindex="0"
+                      role="button"
+                      aria-label="Open ${scene.object} scene ${scene.scene} 3D inspector"
+                    >
+                      <img class="absolute inset-0 h-full w-full object-cover" src="./static/images/dataset-preview/${scene.folder}-rgb.webp" alt="${scene.object} scene ${scene.scene} RGB preview" />
+                      <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150" src="./static/images/dataset-preview/${scene.folder}-nir.webp" alt="${scene.object} scene ${scene.scene} NIR preview" data-static-nir />
+                      <div class="absolute inset-0 grid place-items-center px-4 text-center text-xs leading-5 text-neutral-500" data-viewer-placeholder>
+                        ${canEmbed3dViewer ? "" : "HTTP required"}
+                      </div>
+                      <div class="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10"></div>
+                      <div class="pointer-events-none absolute left-2 top-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold text-white/80 opacity-0 transition-opacity group-hover:opacity-100">
+                        ${scene.object} · ${scene.scene}
+                      </div>
+                      <div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150" data-split-overlay>
+                        <div class="absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" style="top: var(--split-y);"></div>
+                        <span class="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">RGB</span>
+                        <span class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">NIR</span>
+                      </div>
+                    </div>`;
+                  })
+                  .join("");
+
+                return `<div class="grid place-items-center bg-neutral-800 px-2 py-2 text-xs font-semibold text-neutral-300 sm:text-sm">${group.label}</div>${cells}`;
+              })
+              .join("")}
+          </div>
+        </div>`;
+
+        realGalleryGrid.querySelectorAll("[data-real-card]").forEach((card) => {
+          const id = card.dataset.viewerId;
+          const scene = realDatasetScenes.find((item) => item.folder === id);
+
+          card.addEventListener("pointermove", (event) => {
+            if (realGalleryMode !== "split") return;
+            const frame = card.querySelector("[data-viewer-frame]");
+            const rect = (frame || card).getBoundingClientRect();
+            realGallerySplitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+            applyRealGalleryMode();
+          });
+
+          card.addEventListener("click", () => openRealViewerModal(scene));
+          card.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openRealViewerModal(scene);
+            }
+          });
+        });
+
+        applyRealGalleryMode();
+      }
+
+      function setInspectorModalityStyles() {
+        inspectorModalityButtons.forEach((button) => {
+          const active = button.dataset.inspectorModality === inspectorModality;
+          button.classList.toggle("bg-white", active);
+          button.classList.toggle("text-neutral-950", active);
+          button.classList.toggle("text-neutral-400", !active);
+        });
+      }
+
+      async function openRealViewerModal(scene) {
+        inspectorScene = scene;
+        inspectorModality = realGalleryMode === "nir" ? "nir" : "rgb";
+        realViewerTitle.textContent = `${scene.object} · Scene ${scene.scene}`;
+        realViewerSubtitle.textContent = "Interactive RGB-NIR depth-warp reconstruction";
+        realViewerModal?.classList.remove("hidden");
+        setInspectorModalityStyles();
+        closeRealViewerModal?.focus();
+
+        const canOpenViewer = window.location.protocol === "http:" || window.location.protocol === "https:";
+        realViewerContainer?.classList.toggle("hidden", !canOpenViewer);
+        realViewerFileWarning?.classList.toggle("hidden", canOpenViewer);
+        if (!canOpenViewer || !realViewerContainer) return;
+
+        inspectorViewer?.dispose();
+        inspectorViewer = null;
+        realViewerContainer.innerHTML = "";
+
+        real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=texture-queue-1");
+        const module = await real3dViewerModulePromise;
+        if (inspectorScene !== scene) return;
+
+        inspectorViewer = module.mountDatasetViewer({
+          container: realViewerContainer,
+          basePath: `./static/viewers/real-dataset-3d/${scene.folder}/`,
+        });
+        inspectorViewer.setModality(inspectorModality);
+        inspectorViewer.setRgbNirSplit(null);
+      }
+
+      function closeRealViewer() {
+        realViewerModal?.classList.add("hidden");
+        inspectorViewer?.dispose();
+        inspectorViewer = null;
+        inspectorScene = null;
+      }
+
+      function renderDatasetModal() {
+        setDomainStyles();
+        showDatasetMode();
+        if (datasetState.domain === "real") {
+          renderRealGallery();
+        } else {
+          disposeRealGalleryViewers();
+          renderSyntheticObjectTabs();
+          renderSyntheticSceneGrid();
+        }
+      }
+
+      function openDatasetModal(domain) {
+        if (domain === "real") {
+          renderRealGallery();
+          realDatasetGallery?.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+        datasetState.domain = domain || "real";
+        datasetState.objectIndex = 0;
+        datasetModal?.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+        renderDatasetModal();
+        closeDatasetModal?.focus();
+      }
+
+      function hideDatasetModal() {
+        closeRealViewer();
+        datasetModal?.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+        disposeRealGalleryViewers();
+      }
+
+      document.querySelectorAll("[data-open-dataset]").forEach((button) => {
+        button.addEventListener("click", () => openDatasetModal(button.dataset.openDataset));
+      });
+
+      datasetDomainButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          datasetState.domain = button.dataset.domain || "real";
+          datasetState.objectIndex = 0;
+          renderDatasetModal();
+        });
+      });
+
+      realViewModeButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          realGalleryMode = button.dataset.realViewMode || "rgb";
+          applyRealGalleryMode();
+        });
+      });
+
+      inspectorModalityButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          inspectorModality = button.dataset.inspectorModality || "rgb";
+          setInspectorModalityStyles();
+          inspectorViewer?.setModality(inspectorModality);
+          inspectorViewer?.setRgbNirSplit(null);
+        });
+      });
+
+      datasetObjectTabs?.addEventListener("click", (event) => {
+        const tab = event.target.closest("[data-object-index]");
+        if (!tab) return;
+        datasetState.objectIndex = Number(tab.dataset.objectIndex);
+        renderSyntheticSceneGrid();
+        renderSyntheticObjectTabs();
+      });
+
+      function setAllDatasetSplitBars(percent) {
+        document.querySelectorAll(".dataset-split").forEach((split) => {
+          split.style.setProperty("--split-y", percent);
+        });
+      }
+
+      datasetSceneGrid?.addEventListener("pointermove", (event) => {
+        const split = event.target.closest(".dataset-split");
+        if (!split) return;
+        const rect = split.getBoundingClientRect();
+        const y = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
+        setAllDatasetSplitBars(`${(y / rect.height) * 100}%`);
+      });
+
+      closeDatasetModal?.addEventListener("click", hideDatasetModal);
+      datasetModal?.addEventListener("click", (event) => {
+        if (event.target === datasetModal) hideDatasetModal();
+      });
+      closeRealViewerModal?.addEventListener("click", closeRealViewer);
+      realViewerModal?.addEventListener("click", (event) => {
+        if (event.target === realViewerModal) closeRealViewer();
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        if (!realViewerModal?.classList.contains("hidden")) {
+          closeRealViewer();
+          return;
+        }
+        if (!datasetModal?.classList.contains("hidden")) {
+          hideDatasetModal();
+        }
+      });
+
+      renderRealGallery();
+    </script>
+  </body>
+</html>
+
+
+
+
