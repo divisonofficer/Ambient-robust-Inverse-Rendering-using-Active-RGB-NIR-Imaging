@@ -28,6 +28,7 @@ class DatasetViewer {
     this.lastTextureByModality = { rgb: null, nir: null };
     this.raf = 0;
     this.currentFrameId = -1;
+    this.targetFrameId = -1;
     this.depthFrameId = -1;
     this.sceneToken = 0;
     this.ready = false;
@@ -96,6 +97,7 @@ class DatasetViewer {
     const token = ++this.sceneToken;
     this.basePath = basePath.endsWith("/") ? basePath : `${basePath}/`;
     this.currentFrameId = -1;
+    this.targetFrameId = -1;
     this.depthFrameId = -1;
     this.ready = false;
     this.showError("");
@@ -144,6 +146,7 @@ class DatasetViewer {
   setModality(modality) {
     this.modality = modality === "nir" ? "nir" : "rgb";
     this.currentFrameId = -1;
+    this.targetFrameId = -1;
     this.depthFrameId = -1;
     this.updateNearestFrame(true);
     this.updateLayerState();
@@ -152,6 +155,11 @@ class DatasetViewer {
   setRgbNirSplit(splitTop) {
     this.splitTop = Number.isFinite(splitTop) ? clamp(splitTop, 0, 1) : null;
     this.updateLayerState();
+  }
+
+  setFrustumsVisible(visible) {
+    this.showFrustums = !!visible;
+    if (this.frustumGroup) this.frustumGroup.visible = this.showFrustums;
   }
 
   pause() {
@@ -193,6 +201,9 @@ class DatasetViewer {
     this.rgbDepthMesh = null;
     this.nirDepthMesh = null;
     this.depthGeometry = null;
+    this.currentFrameId = -1;
+    this.targetFrameId = -1;
+    this.depthFrameId = -1;
     this.frustumGroup = null;
     this.showFrustums = false;
     this.points = null;
@@ -351,12 +362,23 @@ class DatasetViewer {
       }
     }
 
+    this.targetFrameId = best.id;
+    this.requestTexture(best, "rgb", true);
+    this.requestTexture(best, "nir", true);
+    this.prefetchNeighborTextures(best);
+
+    if (!this.areFrameTexturesReady(best)) return;
     if (!force && best.id === this.currentFrameId) return;
     this.currentFrameId = best.id;
     this.placeDepthWarp(best);
-    this.prefetchNeighborTextures(best);
     this.highlightFrame(best);
     this.setHud(`depth-warp - frame ${best.id} - ${best.split}\nDrag to rotate. Hover vertically for RGB/NIR split.`);
+  }
+
+  areFrameTexturesReady(frame) {
+    const rgb = this.textureRecords.get(`rgb:${frame.stem}`);
+    const nir = this.textureRecords.get(`nir:${frame.stem}`);
+    return rgb?.status === "loaded" && !!rgb.texture && nir?.status === "loaded" && !!nir.texture;
   }
 
   prefetchNeighborTextures(activeFrame) {
@@ -577,8 +599,7 @@ class DatasetViewer {
   getTexture(frame, modality) {
     const record = this.requestTexture(frame, modality, true);
     if (record?.status === "loaded" && record.texture) return record.texture;
-
-    return this.findLoadedNeighborTexture(frame, modality) || this.lastTextureByModality[modality] || null;
+    return null;
   }
 
   requestTexture(frame, modality, priority = false) {
@@ -638,7 +659,7 @@ class DatasetViewer {
           this.textures.set(record.key, texture);
           this.lastTextureByModality[record.modality] = texture;
 
-          if (record.frameId === this.currentFrameId) this.updateNearestFrame(true);
+          if (record.frameId === this.targetFrameId) this.updateNearestFrame(true);
           this.pumpTextureQueue();
         },
         undefined,

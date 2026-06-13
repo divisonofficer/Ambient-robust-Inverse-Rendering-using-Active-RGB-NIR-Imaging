@@ -4,3 +4,5 @@
 *.bak
 Thumbs.db
 .DS_Store
+standalone_synth.zip
+tools/pdf-renders/

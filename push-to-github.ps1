@@ -9,6 +9,9 @@ if (-not $git) {
 }
 
 git branch -M main
+git config gc.auto 0
+git config maintenance.auto false
+git config core.fsmonitor false
 git remote remove origin 2>$null
 git remote add origin $repo
 git add .
