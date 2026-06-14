@@ -77,8 +77,8 @@
 
     <main>
       <section class="bg-white">
-        <div class="mx-auto grid max-w-6xl gap-10 px-5 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-18">
-          <div>
+        <div class="mx-auto max-w-7xl px-5 py-14 lg:px-8 lg:py-18">
+          <div class="mx-auto max-w-4xl text-center">
             <p class="text-sm font-semibold uppercase tracking-wide text-copper">Overview</p>
             <h2 class="mt-3 font-serif text-3xl font-semibold leading-tight sm:text-4xl">
               Active RGB-NIR imaging for stable inverse rendering
@@ -90,13 +90,13 @@
               The method combines multi-view RGB observations, active NIR flash images, and an RGB-NIR BRDF model to recover geometry, roughness, metallic parameters, diffuse albedo, and environment illumination.
             </p>
           </div>
-          <figure class="overflow-hidden rounded-lg border border-line bg-mist">
+          <figure class="mt-10 bg-white">
             <img
-              class="h-full w-full bg-white object-contain"
+              class="w-full bg-white object-contain"
               src="./static/images/figure-1-teaser.png"
               alt="Figure 1 teaser showing the mobile RGB-NIR imaging system, captured observations, reconstructed geometry and reflectance, and relighting results."
             />
-            <figcaption class="border-t border-line bg-white px-4 py-3 text-sm text-neutral-600">
+            <figcaption class="mt-3 text-center text-sm leading-6 text-neutral-600">
               Figure 1: overview of acquisition, reconstruction, and relighting.
             </figcaption>
           </figure>
@@ -208,14 +208,7 @@
                     Four objects and fourteen ambient scenes, shown as pixel-aligned RGB/NIR depth-warp views.
                   </p>
                 </div>
-                <div>
-                  <p class="mb-2 text-right text-sm font-semibold text-teal">14 assets</p>
-                  <div class="inline-flex rounded-md border border-line bg-mist p-1" aria-label="Real dataset view mode">
-                    <button type="button" class="real-view-mode rounded px-3 py-1.5 text-sm font-semibold" data-real-view-mode="rgb">RGB</button>
-                    <button type="button" class="real-view-mode rounded px-3 py-1.5 text-sm font-semibold" data-real-view-mode="nir">NIR</button>
-                    <button type="button" class="real-view-mode rounded px-3 py-1.5 text-sm font-semibold" data-real-view-mode="split">Split</button>
-                  </div>
-                </div>
+                <p class="text-sm font-semibold text-teal">14 assets</p>
               </div>
               <div id="real-gallery-file-warning" class="mt-5 hidden rounded-lg border border-line bg-mist px-4 py-4 text-sm leading-6 text-neutral-700">
                 The 3D viewer uses ES modules and fetch-based assets, so browsers block it from direct file:// pages. It works on HTTP/HTTPS static hosting such as GitHub Pages.
@@ -367,21 +360,27 @@
           </div>
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-3">
             <p id="real-viewer-subtitle" class="text-sm leading-6 text-neutral-400">
-              Drag to rotate. Toggle view frustums to inspect captured camera views.
+              Drag orbit · Wheel zoom · Right drag pan
             </p>
             <div class="flex flex-wrap items-center gap-2">
-              <button
-                id="inspector-frustum-toggle"
-                type="button"
-                class="rounded-md border border-white/15 bg-black px-3 py-2 text-sm font-semibold text-neutral-300 hover:border-teal hover:text-white"
-                aria-pressed="false"
-              >
-                View frustums
-              </button>
-              <div class="inline-flex rounded-md border border-white/15 bg-black p-1" aria-label="Inspector modality">
-                <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="rgb">RGB</button>
-                <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="nir">NIR</button>
-                <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="split">Split</button>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Camera</span>
+                <button
+                  id="inspector-frustum-toggle"
+                  type="button"
+                  class="rounded-md border border-white/15 bg-black px-3 py-2 text-sm font-semibold text-neutral-300 hover:border-teal hover:text-white"
+                  aria-pressed="false"
+                >
+                  Show views
+                </button>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Mode</span>
+                <div class="inline-flex rounded-md border border-white/15 bg-black p-1" aria-label="Inspector modality">
+                  <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="rgb">RGB</button>
+                  <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="nir">NIR</button>
+                  <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="split">Split</button>
+                </div>
               </div>
             </div>
           </div>
@@ -404,45 +403,172 @@
             <p class="text-sm font-semibold uppercase tracking-wide text-copper">Results</p>
             <h2 class="mt-3 font-serif text-3xl font-semibold">Reconstruction results</h2>
             <p class="mt-5 leading-8 text-neutral-700">
-              Result panels are prepared for method comparisons, ambient-robust reconstruction examples, relighting outputs, and ablation studies.
+              The paper evaluates RGB-NIR inverse rendering through BRDF validation, comparisons with passive and active RGB baselines, ambient-robust reconstruction, real-object relighting, ablations, and stress tests across material and scene complexity.
             </p>
           </div>
-          <div class="mt-10 space-y-14">
+          <div class="mt-10 space-y-16">
             <article>
-              <h3 class="text-xl font-semibold">Experiment 1: Passive RGB comparison</h3>
+              <h3 class="text-2xl font-semibold">BRDF model validation</h3>
               <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                Slot for comparison against passive RGB inverse rendering baselines.
+                The RGB-NIR reflectance model is validated against measured material responses, showing how the NIR channel constrains reflectance parameters that are ambiguous in RGB-only observations.
               </p>
-              <figure class="mt-5 grid aspect-video place-items-center bg-mist p-6 text-center">
-                <p class="text-sm leading-6 text-neutral-600">Experiment 1 media placeholder</p>
+              <figure class="mt-5">
+                <img
+                  class="w-full bg-white object-contain"
+                  src="./static/images/results/figure-07-brdf-validation.png"
+                  alt="Figure 7: validation of the RGB-NIR BRDF model"
+                  loading="lazy"
+                />
+                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                  Figure 7. Validation of the RGB-NIR BRDF model on synthetic and measured observations.
+                </figcaption>
               </figure>
             </article>
+
             <article>
-              <h3 class="text-xl font-semibold">Experiment 2: Ambient robustness</h3>
+              <h3 class="text-2xl font-semibold">Comparison against inverse rendering baselines</h3>
               <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                Slot for reconstruction consistency across environment maps and illumination changes.
+                Baseline comparisons cover passive RGB inverse rendering, active RGB-only imaging, and diffusion-based inverse rendering. The result panels compare rendering, albedo, roughness, normals, environment maps, and relighting quality.
               </p>
-              <figure class="mt-5 grid aspect-video place-items-center bg-mist p-6 text-center">
-                <p class="text-sm leading-6 text-neutral-600">Experiment 2 media placeholder</p>
+              <figure class="mt-5">
+                <img
+                  class="w-full bg-white object-contain"
+                  src="./static/images/results/figure-08-passive-comparison.png"
+                  alt="Figure 8: comparison with passive RGB inverse rendering"
+                  loading="lazy"
+                />
+                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                  Figure 8. Comparison with passive RGB inverse rendering methods on synthetic and real-world scenes.
+                </figcaption>
               </figure>
+              <div class="mt-8 grid gap-8 lg:grid-cols-2">
+                <figure>
+                  <img
+                    class="w-full bg-white object-contain"
+                    src="./static/images/results/figure-09-active-rgb-comparison.png"
+                    alt="Figure 9: comparison with active RGB inverse rendering"
+                    loading="lazy"
+                  />
+                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                    Figure 9. Comparison with an active RGB inverse rendering setup.
+                  </figcaption>
+                </figure>
+                <figure>
+                  <img
+                    class="w-full bg-white object-contain"
+                    src="./static/images/results/figure-10-diffusion-comparison.png"
+                    alt="Figure 10: comparison with diffusion-based inverse rendering"
+                    loading="lazy"
+                  />
+                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                    Figure 10. Comparison with diffusion-based inverse rendering.
+                  </figcaption>
+                </figure>
+              </div>
             </article>
+
             <article>
-              <h3 class="text-xl font-semibold">Experiment 3: Relighting and ablation</h3>
+              <h3 class="text-2xl font-semibold">Ambient robustness across environments</h3>
               <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                Point-light relighting on reconstructed objects demonstrates recovered geometry and reflectance quality.
+                The method is evaluated under changing environment illumination, including controlled real-world captures, synthetic environment maps, and outdoor lighting conditions.
               </p>
-              <figure class="mt-5 bg-black">
-                <video
-                  class="aspect-video w-full object-cover"
-                  autoplay
-                  muted
-                  loop
-                  playsinline
-                  preload="auto"
-                >
+              <figure class="mt-5">
+                <img
+                  class="w-full bg-white object-contain"
+                  src="./static/images/results/figure-11-real-env-robustness.png"
+                  alt="Figure 11: ambient-robust reconstruction on the real-world dataset"
+                  loading="lazy"
+                />
+                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                  Figure 11. Real-world ambient-robust reconstruction across multiple environment maps.
+                </figcaption>
+              </figure>
+              <div class="mt-8 grid gap-8 lg:grid-cols-2">
+                <figure>
+                  <img
+                    class="w-full bg-white object-contain"
+                    src="./static/images/results/figure-12-synthetic-env-robustness.png"
+                    alt="Figure 12: RGB diffuse albedo reconstruction across synthetic environment maps"
+                    loading="lazy"
+                  />
+                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                    Figure 12. RGB diffuse albedo reconstruction across synthetic environment maps.
+                  </figcaption>
+                </figure>
+                <figure>
+                  <img
+                    class="w-full bg-white object-contain"
+                    src="./static/images/results/figure-13-outdoor-robustness.png"
+                    alt="Figure 13: reflectance reconstruction under outdoor illuminations"
+                    loading="lazy"
+                  />
+                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                    Figure 13. Reflectance reconstruction under real-world outdoor illuminations.
+                  </figcaption>
+                </figure>
+              </div>
+            </article>
+
+            <article>
+              <h3 class="text-2xl font-semibold">Real-world relighting</h3>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
+                Relighting results visualize how the reconstructed objects respond to new illumination. The video shows point-light relighting quality on a real captured object.
+              </p>
+              <figure class="mt-5">
+                <img
+                  class="w-full bg-white object-contain"
+                  src="./static/images/results/figure-14-real-relighting.png"
+                  alt="Figure 14: relighting results for real-world objects"
+                  loading="lazy"
+                />
+                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                  Figure 14. Relighting results for real-world objects under different light directions.
+                </figcaption>
+              </figure>
+              <figure class="mt-8 bg-black">
+                <video class="aspect-video w-full object-cover" autoplay muted loop playsinline preload="auto">
                   <source src="./static/videos/experiment_relighting_pointlight.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
+                <figcaption class="mt-3 bg-white text-sm leading-6 text-neutral-600">
+                  Point-light relighting video on a reconstructed real object.
+                </figcaption>
+              </figure>
+            </article>
+
+            <article>
+              <h3 class="text-2xl font-semibold">Ablation: NIR flash inverse rendering</h3>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
+                The ablation isolates the contribution of NIR flash observations, showing how the active NIR signal improves decomposition quality under ambient illumination.
+              </p>
+              <figure class="mt-5">
+                <img
+                  class="w-full bg-white object-contain"
+                  src="./static/images/results/figure-15-nir-ablation.png"
+                  alt="Figure 15: impact of NIR flash inverse rendering"
+                  loading="lazy"
+                />
+                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                  Figure 15. Impact of NIR flash inverse rendering on reflectance and relighting.
+                </figcaption>
+              </figure>
+            </article>
+
+            <article>
+              <h3 class="text-2xl font-semibold">Material types and scene complexity</h3>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
+                Additional experiments test diffuse, specular, metallic, and multi-object scenes to show how reconstruction behaves as material composition and geometry become more challenging.
+              </p>
+              <figure class="mt-5">
+                <img
+                  class="w-full bg-white object-contain"
+                  src="./static/images/results/figure-16-material-complexity.png"
+                  alt="Figure 16: dependency on material types and scene complexity"
+                  loading="lazy"
+                />
+                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
+                  Figure 16. Dependency on material types and scene complexity.
+                </figcaption>
               </figure>
             </article>
           </div>
@@ -605,8 +731,8 @@
         { label: "Owl", scenes: ["L", "N"], prefix: "owl" },
       ];
 
-      const realBoardColumns = ["View 1", "View 2", "View 3", "View 4"];
-      const syntheticBoardColumns = ["Bridge", "Courtyard", "Museum", "Sunset"];
+      const realBoardColumns = ["Environment 1", "Environment 2", "Environment 3", "Environment 4"];
+      const syntheticBoardColumns = ["Environment 1", "Environment 2", "Environment 3", "Environment 4"];
 
       const syntheticDatasetGroups = [
         { label: "Chair", scenes: ["bridge", "courtyard", "museum", "sunset"], prefix: "chair" },
@@ -615,18 +741,20 @@
       ];
 
       const realDatasetScenes = realDatasetGroups.flatMap((group) =>
-        group.scenes.map((scene) => ({
+        group.scenes.map((scene, index) => ({
           object: group.label,
           scene,
+          displayScene: `Environment ${index + 1}`,
           folder: `${group.prefix}_${scene}`,
           root: "real-dataset-3d",
         }))
       );
 
       const syntheticDatasetScenes = syntheticDatasetGroups.flatMap((group) =>
-        group.scenes.map((scene) => ({
+        group.scenes.map((scene, index) => ({
           object: group.label,
           scene: scene.charAt(0).toUpperCase() + scene.slice(1),
+          displayScene: `Environment ${index + 1}`,
           folder: `${group.prefix}_${scene}`,
           root: "synthetic-dataset-3d",
         }))
@@ -748,7 +876,7 @@
         mountingViewerIds.add(id);
 
         try {
-          real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=inspector-controls-1");
+          real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=tiger-c-plane-offset-1");
           const module = await real3dViewerModulePromise;
           if (!realGalleryViewers.has(id)) return null;
 
@@ -790,27 +918,7 @@
       }
 
       function applyRealGalleryMode() {
-        setRealViewModeStyles();
-        realGalleryGrid?.classList.toggle("is-split-mode", realGalleryMode === "split");
-        realGalleryGrid?.style.setProperty("--split-y", `${realGallerySplitTop * 100}%`);
         realGalleryViewers.forEach((entry) => applyRealViewerMode(entry));
-        realGalleryGrid?.querySelectorAll("[data-split-overlay]").forEach((overlay) => {
-          overlay.classList.toggle("opacity-0", realGalleryMode !== "split");
-        });
-        realGalleryGrid?.querySelectorAll("[data-real-card]").forEach((card) => {
-          const nirPreview = card.querySelector("[data-static-nir]");
-          if (!nirPreview) return;
-          if (realGalleryMode === "nir") {
-            nirPreview.style.opacity = "1";
-            nirPreview.style.clipPath = "inset(0 0 0 0)";
-          } else if (realGalleryMode === "split") {
-            nirPreview.style.opacity = "1";
-            nirPreview.style.clipPath = `inset(var(--split-y) 0 0 0)`;
-          } else {
-            nirPreview.style.opacity = "0";
-            nirPreview.style.clipPath = "inset(0 0 0 0)";
-          }
-        });
       }
 
       function markViewerActive(id) {
@@ -890,29 +998,30 @@
                   .map((column, sceneIndex) => {
                     const sceneName = group.scenes[sceneIndex];
                     const scene = sceneName
-                      ? { object: group.label, scene: sceneName, folder: `${group.prefix}_${sceneName}` }
+                      ? { object: group.label, scene: sceneName, displayScene: column, folder: `${group.prefix}_${sceneName}` }
                       : null;
                     if (!scene) {
                       return `<div class="aspect-[4/3] bg-neutral-800/45"></div>`;
                     }
                     return `<div
                       class="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-neutral-950 focus-within:ring-2 focus-within:ring-teal"
+                      style="--split-y: 50%;"
                       data-real-card
                       data-viewer-id="${scene.folder}"
                       tabindex="0"
                       role="button"
-                      aria-label="Open ${scene.object} scene ${scene.scene} 3D inspector"
+                      aria-label="Open ${scene.object} ${scene.displayScene} 3D inspector"
                     >
-                      <img class="absolute inset-0 h-full w-full object-cover" src="./static/images/dataset-preview/${scene.folder}-rgb.webp" alt="${scene.object} scene ${scene.scene} RGB preview" />
-                      <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150" src="./static/images/dataset-preview/${scene.folder}-nir.webp" alt="${scene.object} scene ${scene.scene} NIR preview" data-static-nir />
+                      <img class="absolute inset-0 h-full w-full object-cover" src="./static/images/dataset-preview/${scene.folder}-rgb.webp" alt="${scene.object} ${scene.displayScene} RGB preview" />
+                      <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100" style="clip-path: inset(var(--split-y) 0 0 0);" src="./static/images/dataset-preview/${scene.folder}-nir.webp" alt="${scene.object} ${scene.displayScene} NIR preview" data-static-nir />
                       <div class="absolute inset-0 grid place-items-center px-4 text-center text-xs leading-5 text-neutral-500" data-viewer-placeholder>
                         ${canEmbed3dViewer ? "" : "HTTP required"}
                       </div>
                       <div class="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10"></div>
                       <div class="pointer-events-none absolute left-2 top-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold text-white/80 opacity-0 transition-opacity group-hover:opacity-100">
-                        ${scene.object} · ${scene.scene}
+                        ${scene.object} · ${scene.displayScene}
                       </div>
-                      <div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150" data-split-overlay>
+                      <div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100" data-split-overlay>
                         <div class="absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" style="top: var(--split-y);"></div>
                         <span class="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">RGB</span>
                         <span class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">NIR</span>
@@ -932,11 +1041,9 @@
           const scene = realDatasetScenes.find((item) => item.folder === id);
 
           card.addEventListener("pointermove", (event) => {
-            if (realGalleryMode !== "split") return;
-            const frame = card.querySelector("[data-viewer-frame]");
-            const rect = (frame || card).getBoundingClientRect();
-            realGallerySplitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
-            applyRealGalleryMode();
+            const rect = card.getBoundingClientRect();
+            const splitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+            card.style.setProperty("--split-y", `${splitTop * 100}%`);
           });
 
           card.addEventListener("click", () => openRealViewerModal(scene));
@@ -967,17 +1074,23 @@
                     const scene = syntheticDatasetScenes.find((item) => item.folder === `${group.prefix}_${sceneName}`);
                     return `<div
                       class="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-neutral-950 focus-within:ring-2 focus-within:ring-teal"
+                      style="--split-y: 50%;"
                       data-synthetic-card
                       data-viewer-id="${scene.folder}"
                       tabindex="0"
                       role="button"
-                      aria-label="Open synthetic ${scene.object} ${scene.scene} 3D inspector"
+                      aria-label="Open synthetic ${scene.object} ${scene.displayScene} 3D inspector"
                     >
-                      <img class="absolute inset-0 h-full w-full object-cover" src="./static/images/synthetic-dataset-preview/${scene.folder}-rgb.webp" alt="Synthetic ${scene.object} ${scene.scene} RGB preview" />
-                      <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150 group-hover:opacity-100" src="./static/images/synthetic-dataset-preview/${scene.folder}-nir.webp" alt="Synthetic ${scene.object} ${scene.scene} NIR preview" />
+                      <img class="absolute inset-0 h-full w-full object-cover" src="./static/images/synthetic-dataset-preview/${scene.folder}-rgb.webp" alt="Synthetic ${scene.object} ${scene.displayScene} RGB preview" />
+                      <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100" style="clip-path: inset(var(--split-y) 0 0 0);" src="./static/images/synthetic-dataset-preview/${scene.folder}-nir.webp" alt="Synthetic ${scene.object} ${scene.displayScene} NIR preview" />
                       <div class="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10"></div>
                       <div class="pointer-events-none absolute left-2 top-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold text-white/80 opacity-0 transition-opacity group-hover:opacity-100">
-                        ${scene.object} · ${scene.scene}
+                        ${scene.object} · ${scene.displayScene}
+                      </div>
+                      <div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100">
+                        <div class="absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" style="top: var(--split-y);"></div>
+                        <span class="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">RGB</span>
+                        <span class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">NIR</span>
                       </div>
                     </div>`;
                   })
@@ -991,6 +1104,11 @@
 
         syntheticGalleryGrid.querySelectorAll("[data-synthetic-card]").forEach((card) => {
           const scene = syntheticDatasetScenes.find((item) => item.folder === card.dataset.viewerId);
+          card.addEventListener("pointermove", (event) => {
+            const rect = card.getBoundingClientRect();
+            const splitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+            card.style.setProperty("--split-y", `${splitTop * 100}%`);
+          });
           card.addEventListener("click", () => openRealViewerModal(scene));
           card.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -1029,10 +1147,10 @@
 
       async function openRealViewerModal(scene) {
         inspectorScene = scene;
-        inspectorModality = realGalleryMode === "nir" ? "nir" : "rgb";
+        inspectorModality = "rgb";
         inspectorSplitTop = 0.5;
         inspectorShowFrustums = false;
-        realViewerTitle.textContent = `${scene.object} · Scene ${scene.scene}`;
+        realViewerTitle.textContent = `${scene.object} · ${scene.displayScene || `Scene ${scene.scene}`}`;
         realViewerModal?.classList.remove("hidden");
         setInspectorModalityStyles();
         setInspectorFrustumStyle();
@@ -1047,7 +1165,7 @@
         inspectorViewer = null;
         realViewerContainer.innerHTML = "";
 
-        real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=inspector-controls-1");
+        real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=tiger-c-plane-offset-1");
         const module = await real3dViewerModulePromise;
         if (inspectorScene !== scene) return;
 

@@ -6,6 +6,13 @@ const IMG_EXT = "webp";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const sigmoid = (value) => 1 / (1 + Math.exp(-value));
+const SCENE_OVERRIDES = {
+  tiger_C: {
+    center: [-0.0348, -2.0049, -0.4173],
+    objectRadius: 0.6704,
+    imageOffset: [-0.18, 0.14],
+  },
+};
 
 export function mountDatasetViewer({ container, basePath }) {
   const viewer = new DatasetViewer(container);
@@ -34,14 +41,39 @@ class DatasetViewer {
     this.ready = false;
     this.paused = false;
     this.splitTop = null;
+    this.userInteracted = false;
+    this.introOrbitUntil = 0;
 
     this.container.innerHTML = "";
     this.container.classList.add("relative", "overflow-hidden", "bg-black");
+    this.container.style.cursor = "grab";
 
     this.canvas = document.createElement("canvas");
     this.canvas.className = "absolute inset-0 h-full w-full";
     this.canvas.tabIndex = 0;
     this.container.appendChild(this.canvas);
+
+    this.affordance = document.createElement("div");
+    this.affordance.className =
+      "pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center opacity-100 transition-opacity duration-500";
+    this.affordance.innerHTML =
+      '<div class="rounded-full border border-white/10 bg-black/55 px-4 py-2 text-xs font-semibold text-white/85 shadow-lg backdrop-blur">Drag to orbit · Wheel to zoom</div>';
+    this.container.appendChild(this.affordance);
+
+    this.gizmo = document.createElement("div");
+    this.gizmo.className =
+      "pointer-events-none absolute bottom-5 right-5 z-10 h-20 w-20 opacity-80";
+    this.gizmo.innerHTML = `
+      <svg viewBox="0 0 80 80" class="h-full w-full drop-shadow">
+        <circle cx="40" cy="42" r="4" fill="rgba(255,255,255,0.75)" />
+        <line x1="40" y1="42" x2="66" y2="42" stroke="#2dd4bf" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="40" y1="42" x2="40" y2="14" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="40" y1="42" x2="22" y2="62" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" />
+        <text x="69" y="46" fill="#2dd4bf" font-size="12" font-weight="700">X</text>
+        <text x="36" y="12" fill="#f87171" font-size="12" font-weight="700">Y</text>
+        <text x="12" y="70" fill="#60a5fa" font-size="12" font-weight="700">Z</text>
+      </svg>`;
+    this.container.appendChild(this.gizmo);
 
     this.hud = document.createElement("div");
     this.hud.className =
@@ -66,6 +98,29 @@ class DatasetViewer {
     this.controls.rotateSpeed = 0.7;
     this.controls.enableRotate = true;
 
+    this.canvas.addEventListener("pointerenter", () => {
+      this.stopIntroOrbit();
+      this.showInteractionHint();
+    });
+    this.canvas.addEventListener("pointerdown", () => {
+      this.stopIntroOrbit();
+      this.userInteracted = true;
+      this.container.style.cursor = "grabbing";
+      this.showInteractionHint();
+    });
+    this.canvas.addEventListener("pointerup", () => {
+      this.container.style.cursor = "grab";
+    });
+    this.canvas.addEventListener("pointerleave", () => {
+      this.container.style.cursor = "grab";
+      this.hideInteractionHintSoon();
+    });
+    this.canvas.addEventListener("wheel", () => {
+      this.stopIntroOrbit();
+      this.userInteracted = true;
+      this.showInteractionHint();
+    });
+
     this.rgbPlane = null;
     this.nirPlane = null;
     this.rgbDepthMesh = null;
@@ -78,6 +133,7 @@ class DatasetViewer {
     this.center = new THREE.Vector3();
     this.radius = 1;
     this.objectRadius = 1;
+    this.imageOffset = null;
     this.fovX = 0.6;
     this.aspectFromData = 1;
     this.depthWidth = 160;
@@ -131,11 +187,14 @@ class DatasetViewer {
         console.warn("[dataset-viewer] point cloud unavailable, using flat image fallback:", error);
       }
 
+      this.applySceneOverride();
       this.finishCameraSetup();
+      this.buildSpatialGuides();
       this.buildFrustums();
       this.ready = true;
       this.updateNearestFrame(true);
       this.resize();
+      this.startIntroOrbit();
       this.resume();
     } catch (error) {
       console.error(error);
@@ -176,6 +235,7 @@ class DatasetViewer {
 
   dispose() {
     this.pause();
+    clearTimeout(this.hintTimer);
     this.resizeObserver.disconnect();
     this.clearScene();
     this.controls.dispose();
@@ -205,10 +265,18 @@ class DatasetViewer {
     this.targetFrameId = -1;
     this.depthFrameId = -1;
     this.frustumGroup = null;
+    this.guideGroup = null;
+    this.orbitRing = null;
     this.showFrustums = false;
     this.points = null;
     this.pointData = null;
+    this.center = new THREE.Vector3();
+    this.radius = 1;
+    this.objectRadius = 1;
+    this.imageOffset = null;
     this.ready = false;
+    this.userInteracted = false;
+    this.introOrbitUntil = 0;
     this.prefetchedFrameIds.clear();
   }
 
@@ -239,6 +307,18 @@ class DatasetViewer {
     this.center = new THREE.Vector3();
     for (const frame of this.frames) this.center.add(frame.posV);
     if (this.frames.length) this.center.multiplyScalar(1 / this.frames.length);
+  }
+
+  applySceneOverride() {
+    if (this.pointData) return;
+
+    const sceneName = this.basePath.replace(/\\/g, "/").split("/").filter(Boolean).pop();
+    const override = SCENE_OVERRIDES[sceneName];
+    if (!override) return;
+
+    this.center.set(...override.center);
+    this.objectRadius = override.objectRadius;
+    this.imageOffset = override.imageOffset || null;
   }
 
   buildPointCloud(parsed) {
@@ -345,6 +425,89 @@ class DatasetViewer {
     }
 
     this.scene.add(this.frustumGroup);
+  }
+
+  buildSpatialGuides() {
+    if (this.guideGroup) {
+      this.scene.remove(this.guideGroup);
+      disposeObject(this.guideGroup);
+    }
+
+    const radius = Math.max(this.objectRadius * 1.55, this.radius * 0.1, 0.45);
+    const group = new THREE.Group();
+    group.position.copy(this.center);
+
+    const ringGeometry = new THREE.RingGeometry(radius * 0.985, radius, 128);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.14,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    ring.rotation.x = Math.PI * 0.5;
+    ring.renderOrder = -2;
+    group.add(ring);
+    this.orbitRing = ring;
+
+    const shadowGeometry = new THREE.CircleGeometry(radius * 0.78, 96);
+    const shadowMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.075,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
+    shadow.rotation.x = Math.PI * 0.5;
+    shadow.position.y -= Math.max(this.objectRadius * 0.62, 0.25);
+    shadow.scale.y = 0.46;
+    shadow.renderOrder = -3;
+    group.add(shadow);
+
+    this.guideGroup = group;
+    this.scene.add(group);
+  }
+
+  startIntroOrbit() {
+    this.userInteracted = false;
+    this.introOrbitUntil = performance.now() + 900;
+    this.showInteractionHint();
+    this.hideInteractionHintSoon(2600);
+  }
+
+  stopIntroOrbit() {
+    this.introOrbitUntil = 0;
+  }
+
+  applyIntroOrbit() {
+    if (!this.introOrbitUntil || this.userInteracted) return;
+    const now = performance.now();
+    if (now > this.introOrbitUntil) {
+      this.introOrbitUntil = 0;
+      return;
+    }
+
+    const offset = this.camera.position.clone().sub(this.center);
+    offset.applyAxisAngle(this.camera.up, 0.0045);
+    this.camera.position.copy(this.center).add(offset);
+    this.camera.lookAt(this.center);
+    this.controls.target.copy(this.center);
+  }
+
+  showInteractionHint() {
+    clearTimeout(this.hintTimer);
+    if (this.affordance) this.affordance.style.opacity = "1";
+    if (this.orbitRing?.material) this.orbitRing.material.opacity = "0.28";
+  }
+
+  hideInteractionHintSoon(delay = 1400) {
+    clearTimeout(this.hintTimer);
+    this.hintTimer = setTimeout(() => {
+      if (this.affordance) this.affordance.style.opacity = "0";
+      if (this.orbitRing?.material) this.orbitRing.material.opacity = "0.14";
+    }, delay);
   }
 
   updateNearestFrame(force = false) {
@@ -580,9 +743,16 @@ class DatasetViewer {
     }
 
     const basis = new THREE.Matrix4().makeBasis(frame.rightV, frame.upV, frame.dirV.clone().negate());
+    const offsetX = this.imageOffset?.[0] || 0;
+    const offsetY = this.imageOffset?.[1] || 0;
+    const planeCenter = frame.posV
+      .clone()
+      .addScaledVector(frame.dirV, distance)
+      .addScaledVector(frame.rightV, offsetX * planeW)
+      .addScaledVector(frame.upV, offsetY * planeH);
     for (const plane of [this.rgbPlane, this.nirPlane]) {
       plane.quaternion.setFromRotationMatrix(basis);
-      plane.position.copy(frame.posV).addScaledVector(frame.dirV, distance);
+      plane.position.copy(planeCenter);
       plane.scale.set(planeW, planeH, 1);
       plane.visible = true;
     }
@@ -731,6 +901,7 @@ class DatasetViewer {
   animate() {
     if (this.paused) return;
     this.raf = requestAnimationFrame(() => this.animate());
+    this.applyIntroOrbit();
     this.controls.update();
     this.updateNearestFrame();
     this.renderer.render(this.scene, this.camera);
