@@ -68,8 +68,8 @@
           <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal" href="https://doi.org/10.1145/3799902.3811078">
             DOI
           </a>
-          <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal" href="./static/videos/inverse-rendering-pipeline.mp4">
-            Pipeline video
+          <a class="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal" href="./static/videos/supplement_video%201.mp4">
+            Supplement video
           </a>
         </nav>
       </div>
@@ -149,16 +149,6 @@
               Your browser does not support the video tag.
             </video>
           </figure>
-          <figure class="mt-8 overflow-hidden rounded-lg border border-line bg-white">
-            <img
-              class="w-full bg-white object-contain"
-              src="./static/images/figure-4-pipeline.png"
-              alt="Figure 4 pipeline showing the three-stage RGB-NIR inverse rendering process."
-            />
-            <figcaption class="border-t border-line bg-white px-4 py-3 text-sm text-neutral-600">
-              Figure 4: three-stage RGB-NIR inverse rendering pipeline.
-            </figcaption>
-          </figure>
         </div>
       </section>
 
@@ -203,15 +193,12 @@
         <div class="mx-auto max-w-6xl px-5 pb-14 lg:px-8">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h3 class="text-xl font-semibold">Real-world 3D dataset gallery</h3>
+                  <h3 class="text-xl font-semibold">Real-world RGB/NIR dataset gallery</h3>
                   <p class="mt-1 text-sm leading-6 text-neutral-600">
-                    Four objects and fourteen ambient scenes, shown as pixel-aligned RGB/NIR depth-warp views.
+                    Four objects and fourteen ambient scenes, shown as pixel-aligned RGB/NIR preview pairs.
                   </p>
                 </div>
                 <p class="text-sm font-semibold text-teal">14 assets</p>
-              </div>
-              <div id="real-gallery-file-warning" class="mt-5 hidden rounded-lg border border-line bg-mist px-4 py-4 text-sm leading-6 text-neutral-700">
-                The 3D viewer uses ES modules and fetch-based assets, so browsers block it from direct file:// pages. It works on HTTP/HTTPS static hosting such as GitHub Pages.
               </div>
               <div id="real-gallery-grid" class="mt-5"></div>
         </div>
@@ -221,9 +208,9 @@
         <div class="mx-auto max-w-6xl px-5 py-14 lg:px-8">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h3 class="text-xl font-semibold">Synthetic 3D dataset gallery</h3>
+              <h3 class="text-xl font-semibold">Synthetic RGB/NIR dataset gallery</h3>
               <p class="mt-1 text-sm leading-6 text-neutral-600">
-                Three synthetic objects and four ambient scenes, using the same RGB/NIR 3D viewer structure.
+                Three synthetic objects and four ambient scenes, shown as RGB/NIR preview pairs.
               </p>
             </div>
             <p class="text-sm font-semibold text-teal">12 assets</p>
@@ -232,345 +219,52 @@
         </div>
       </section>
 
-
-      <div
-        id="dataset-modal"
-        class="fixed inset-0 z-50 hidden bg-black/70 px-4 py-5 backdrop-blur-sm sm:px-6"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dataset-modal-title"
-      >
-        <div class="mx-auto flex max-h-full max-w-7xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl">
-          <div class="border-b border-line px-5 py-4 sm:px-6">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <p class="text-sm font-semibold uppercase tracking-wide text-copper">Dataset browser</p>
-                <h2 id="dataset-modal-title" class="mt-1 font-serif text-2xl font-semibold sm:text-3xl">
-                  RGB-NIR paired thumbnails
-                </h2>
-              </div>
-              <button
-                id="close-dataset-modal"
-                type="button"
-                class="grid h-10 w-10 flex-none place-items-center rounded-md border border-line text-xl leading-none text-neutral-600 hover:border-teal hover:text-teal focus:outline-none focus:ring-2 focus:ring-teal"
-                aria-label="Close dataset browser"
-              >
-                X
-              </button>
-            </div>
-            <div class="mt-5">
-              <div class="inline-flex w-fit rounded-md border border-line bg-mist p-1" aria-label="Dataset domain">
-                <button
-                  type="button"
-                  class="dataset-domain rounded px-4 py-2 text-sm font-semibold"
-                  data-domain="real"
-                >
-                  Real-world
-                </button>
-                <button
-                  type="button"
-                  class="dataset-domain rounded px-4 py-2 text-sm font-semibold"
-                  data-domain="synthetic"
-                >
-                  Synthetic
-                </button>
-              </div>
-            </div>
+      <section id="reconstruction-results" class="bg-white">
+        <div class="mx-auto max-w-6xl px-5 py-14 lg:px-8">
+          <div class="max-w-4xl">
+            <p class="text-sm font-semibold uppercase tracking-wide text-copper">Results</p>
+            <h2 class="mt-3 font-serif text-3xl font-semibold">Inverse rendering reconstruction results</h2>
+            <p class="mt-5 leading-8 text-neutral-700">
+              The following synchronized clips show the recovered material components and environment-conditioned relighting for three synthetic objects and three real-world objects. Each scene is a 12-second result sequence that loops continuously like an animated figure.
+            </p>
           </div>
 
-          <div class="overflow-y-auto px-5 py-5 sm:px-6">
-            <section id="synthetic-dataset-browser" class="hidden">
-            <div id="dataset-object-tabs" class="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Dataset objects"></div>
-            <div class="mt-5 flex items-center justify-between gap-4">
-              <div>
-                <h3 id="dataset-object-title" class="text-xl font-semibold">Object 1</h3>
-                <p id="dataset-object-description" class="mt-1 text-sm text-neutral-600">
-                  Four ambient scenes with pixel-aligned RGB and NIR observations.
+
+          <div class="mt-14">
+            <div class="max-w-3xl">
+              <p class="text-sm font-semibold uppercase tracking-wide text-copper">Synthetic</p>
+              <h3 class="mt-2 text-2xl font-semibold">Synthetic inverse rendering reconstruction</h3>
+              <p class="mt-2 text-sm leading-6 text-neutral-700">
+                Controlled synthetic scenes expose the recovered reflectance decomposition and relighting behavior across different object geometries.
+              </p>
+            </div>
+            <div id="synthetic-results-grid" class="mt-7 space-y-8"></div>
+          </div>
+
+          <div class="mt-16 border-t border-line pt-14">
+            <div class="max-w-3xl">
+              <p class="text-sm font-semibold uppercase tracking-wide text-copper">Real world</p>
+              <h3 class="mt-2 text-2xl font-semibold">Real-world inverse rendering reconstruction</h3>
+              <p class="mt-2 text-sm leading-6 text-neutral-700">
+                Real captures demonstrate reconstruction and relighting on objects with measured RGB-NIR observations under changing ambient environments.
+              </p>
+            </div>
+            <div id="real-results-grid" class="mt-7 space-y-8"></div>
+            <div class="mt-14 border-t border-line pt-14">
+              <div class="max-w-3xl">
+                <p class="text-sm font-semibold uppercase tracking-wide text-copper">Real world</p>
+                <h3 class="mt-3 text-2xl font-semibold">Real-world point-light relighting</h3>
+                <p class="mt-2 text-sm leading-6 text-neutral-700">
+                  Reconstructed real-world objects rendered under changing point-light illumination to visualize the recovered appearance and material response.
                 </p>
               </div>
-              <p class="hidden text-sm text-neutral-500 sm:block">4 scenes · RGB/NIR pair</p>
-            </div>
-            <section id="real-3d-viewer-panel" class="mt-5 overflow-hidden rounded-lg border border-line bg-neutral-950 text-white">
-              <div class="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h4 class="font-semibold">3D rotate viewer</h4>
-                  <p id="real-3d-viewer-label" class="mt-1 text-sm text-neutral-400">
-                    Real-world object and scene viewer
-                  </p>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <div class="inline-flex rounded-md border border-white/15 bg-black p-1" aria-label="3D viewer modality">
-                    <button type="button" class="viewer-modality rounded px-3 py-1.5 text-sm font-semibold" data-viewer-modality="rgb">
-                      RGB
-                    </button>
-                    <button type="button" class="viewer-modality rounded px-3 py-1.5 text-sm font-semibold" data-viewer-modality="nir">
-                      NIR
-                    </button>
-                  </div>
-                  <a
-                    id="real-3d-viewer-link"
-                    class="text-sm font-semibold text-teal hover:text-white"
-                    href="./static/viewers/real-dataset-3d/cat_A/index.html"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open standalone
-                  </a>
-                </div>
-              </div>
-              <div
-                id="real-3d-viewer-container"
-                class="h-[420px] w-full bg-black sm:h-[520px]"
-                aria-label="Integrated real-world RGB-NIR 3D rotate dataset viewer"
-              ></div>
-              <div id="real-3d-file-warning" class="hidden border-t border-white/10 bg-black px-4 py-4 text-sm leading-6 text-neutral-300">
-                The 3D viewer uses ES modules and fetch-based assets, so browsers block it from direct file:// pages. It works on HTTP/HTTPS static hosting such as GitHub Pages.
-              </div>
-            </section>
-            <div
-              id="dataset-scene-grid"
-              class="mt-5 flex snap-x gap-4 overflow-x-auto pb-3 lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0"
-            ></div>
-            </section>
-          </div>
-        </div>
-      </div>
-
-      <div
-        id="real-viewer-modal"
-        class="fixed inset-0 z-[60] hidden grid place-items-center bg-black/70 px-4 py-5 backdrop-blur-sm sm:px-6"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="real-viewer-title"
-      >
-        <div class="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-neutral-950 text-white shadow-2xl">
-          <div class="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
-            <div>
-              <p class="text-sm font-semibold uppercase tracking-wide text-teal">3D inspector</p>
-              <h3 id="real-viewer-title" class="mt-1 text-2xl font-semibold">Real-world scene</h3>
-            </div>
-            <button
-              id="close-real-viewer-modal"
-              type="button"
-              class="grid h-10 w-10 flex-none place-items-center rounded-md border border-white/15 text-xl leading-none text-neutral-300 hover:border-teal hover:text-white focus:outline-none focus:ring-2 focus:ring-teal"
-              aria-label="Close 3D inspector"
-            >
-              X
-            </button>
-          </div>
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-3">
-            <p id="real-viewer-subtitle" class="text-sm leading-6 text-neutral-400">
-              Drag orbit · Wheel zoom · Right drag pan
-            </p>
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Camera</span>
-                <button
-                  id="inspector-frustum-toggle"
-                  type="button"
-                  class="rounded-md border border-white/15 bg-black px-3 py-2 text-sm font-semibold text-neutral-300 hover:border-teal hover:text-white"
-                  aria-pressed="false"
-                >
-                  Show views
-                </button>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Mode</span>
-                <div class="inline-flex rounded-md border border-white/15 bg-black p-1" aria-label="Inspector modality">
-                  <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="rgb">RGB</button>
-                  <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="nir">NIR</button>
-                  <button type="button" class="inspector-modality rounded px-3 py-1.5 text-sm font-semibold" data-inspector-modality="split">Split</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="relative bg-black">
-            <div id="real-viewer-container" class="h-[52vh] max-h-[560px] min-h-[320px] w-full bg-black"></div>
-            <div
-              id="real-viewer-split-bar"
-              class="pointer-events-none absolute left-0 right-0 top-1/2 hidden h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55),0_0_18px_rgba(255,255,255,0.45)]"
-            ></div>
-          </div>
-          <div id="real-viewer-file-warning" class="hidden border-t border-white/10 bg-black px-5 py-4 text-sm leading-6 text-neutral-300">
-            The 3D viewer requires HTTP/HTTPS static hosting.
-          </div>
-        </div>
-      </div>
-
-      <section class="bg-white">
-        <div class="mx-auto max-w-6xl px-5 py-14 lg:px-8">
-          <div class="max-w-3xl">
-            <p class="text-sm font-semibold uppercase tracking-wide text-copper">Results</p>
-            <h2 class="mt-3 font-serif text-3xl font-semibold">Reconstruction results</h2>
-            <p class="mt-5 leading-8 text-neutral-700">
-              The paper evaluates RGB-NIR inverse rendering through BRDF validation, comparisons with passive and active RGB baselines, ambient-robust reconstruction, real-object relighting, ablations, and stress tests across material and scene complexity.
-            </p>
-          </div>
-          <div class="mt-10 space-y-16">
-            <article>
-              <h3 class="text-2xl font-semibold">BRDF model validation</h3>
-              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                The RGB-NIR reflectance model is validated against measured material responses, showing how the NIR channel constrains reflectance parameters that are ambiguous in RGB-only observations.
-              </p>
-              <figure class="mt-5">
-                <img
-                  class="w-full bg-white object-contain"
-                  src="./static/images/results/figure-07-brdf-validation.png"
-                  alt="Figure 7: validation of the RGB-NIR BRDF model"
-                  loading="lazy"
-                />
-                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                  Figure 7. Validation of the RGB-NIR BRDF model on synthetic and measured observations.
-                </figcaption>
-              </figure>
-            </article>
-
-            <article>
-              <h3 class="text-2xl font-semibold">Comparison against inverse rendering baselines</h3>
-              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                Baseline comparisons cover passive RGB inverse rendering, active RGB-only imaging, and diffusion-based inverse rendering. The result panels compare rendering, albedo, roughness, normals, environment maps, and relighting quality.
-              </p>
-              <figure class="mt-5">
-                <img
-                  class="w-full bg-white object-contain"
-                  src="./static/images/results/figure-08-passive-comparison.png"
-                  alt="Figure 8: comparison with passive RGB inverse rendering"
-                  loading="lazy"
-                />
-                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                  Figure 8. Comparison with passive RGB inverse rendering methods on synthetic and real-world scenes.
-                </figcaption>
-              </figure>
-              <div class="mt-8 grid gap-8 lg:grid-cols-2">
-                <figure>
-                  <img
-                    class="w-full bg-white object-contain"
-                    src="./static/images/results/figure-09-active-rgb-comparison.png"
-                    alt="Figure 9: comparison with active RGB inverse rendering"
-                    loading="lazy"
-                  />
-                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                    Figure 9. Comparison with an active RGB inverse rendering setup.
-                  </figcaption>
-                </figure>
-                <figure>
-                  <img
-                    class="w-full bg-white object-contain"
-                    src="./static/images/results/figure-10-diffusion-comparison.png"
-                    alt="Figure 10: comparison with diffusion-based inverse rendering"
-                    loading="lazy"
-                  />
-                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                    Figure 10. Comparison with diffusion-based inverse rendering.
-                  </figcaption>
-                </figure>
-              </div>
-            </article>
-
-            <article>
-              <h3 class="text-2xl font-semibold">Ambient robustness across environments</h3>
-              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                The method is evaluated under changing environment illumination, including controlled real-world captures, synthetic environment maps, and outdoor lighting conditions.
-              </p>
-              <figure class="mt-5">
-                <img
-                  class="w-full bg-white object-contain"
-                  src="./static/images/results/figure-11-real-env-robustness.png"
-                  alt="Figure 11: ambient-robust reconstruction on the real-world dataset"
-                  loading="lazy"
-                />
-                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                  Figure 11. Real-world ambient-robust reconstruction across multiple environment maps.
-                </figcaption>
-              </figure>
-              <div class="mt-8 grid gap-8 lg:grid-cols-2">
-                <figure>
-                  <img
-                    class="w-full bg-white object-contain"
-                    src="./static/images/results/figure-12-synthetic-env-robustness.png"
-                    alt="Figure 12: RGB diffuse albedo reconstruction across synthetic environment maps"
-                    loading="lazy"
-                  />
-                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                    Figure 12. RGB diffuse albedo reconstruction across synthetic environment maps.
-                  </figcaption>
-                </figure>
-                <figure>
-                  <img
-                    class="w-full bg-white object-contain"
-                    src="./static/images/results/figure-13-outdoor-robustness.png"
-                    alt="Figure 13: reflectance reconstruction under outdoor illuminations"
-                    loading="lazy"
-                  />
-                  <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                    Figure 13. Reflectance reconstruction under real-world outdoor illuminations.
-                  </figcaption>
-                </figure>
-              </div>
-            </article>
-
-            <article>
-              <h3 class="text-2xl font-semibold">Real-world relighting</h3>
-              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                Relighting results visualize how the reconstructed objects respond to new illumination. The video shows point-light relighting quality on a real captured object.
-              </p>
-              <figure class="mt-5">
-                <img
-                  class="w-full bg-white object-contain"
-                  src="./static/images/results/figure-14-real-relighting.png"
-                  alt="Figure 14: relighting results for real-world objects"
-                  loading="lazy"
-                />
-                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                  Figure 14. Relighting results for real-world objects under different light directions.
-                </figcaption>
-              </figure>
-              <figure class="mt-8 bg-black">
-                <video class="aspect-video w-full object-cover" autoplay muted loop playsinline preload="auto">
-                  <source src="./static/videos/experiment_relighting_pointlight.mp4" type="video/mp4" />
+              <figure class="mt-7 overflow-hidden bg-black">
+                <video class="w-full" autoplay muted loop playsinline preload="auto" aria-label="Point-light relighting experiment">
+                  <source src="./static/videos/experiment_relighting_pointlight_cropped.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
-                <figcaption class="mt-3 bg-white text-sm leading-6 text-neutral-600">
-                  Point-light relighting video on a reconstructed real object.
-                </figcaption>
               </figure>
-            </article>
-
-            <article>
-              <h3 class="text-2xl font-semibold">Ablation: NIR flash inverse rendering</h3>
-              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                The ablation isolates the contribution of NIR flash observations, showing how the active NIR signal improves decomposition quality under ambient illumination.
-              </p>
-              <figure class="mt-5">
-                <img
-                  class="w-full bg-white object-contain"
-                  src="./static/images/results/figure-15-nir-ablation.png"
-                  alt="Figure 15: impact of NIR flash inverse rendering"
-                  loading="lazy"
-                />
-                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                  Figure 15. Impact of NIR flash inverse rendering on reflectance and relighting.
-                </figcaption>
-              </figure>
-            </article>
-
-            <article>
-              <h3 class="text-2xl font-semibold">Material types and scene complexity</h3>
-              <p class="mt-2 max-w-3xl text-sm leading-6 text-neutral-700">
-                Additional experiments test diffuse, specular, metallic, and multi-object scenes to show how reconstruction behaves as material composition and geometry become more challenging.
-              </p>
-              <figure class="mt-5">
-                <img
-                  class="w-full bg-white object-contain"
-                  src="./static/images/results/figure-16-material-complexity.png"
-                  alt="Figure 16: dependency on material types and scene complexity"
-                  loading="lazy"
-                />
-                <figcaption class="mt-3 text-sm leading-6 text-neutral-600">
-                  Figure 16. Dependency on material types and scene complexity.
-                </figcaption>
-              </figure>
-            </article>
+            </div>
           </div>
         </div>
       </section>
@@ -612,6 +306,10 @@
       const copyButton = document.getElementById("copy-bibtex");
       const copyStatus = document.getElementById("copy-status");
       const bibtexCode = document.getElementById("bibtex-code");
+      const realGalleryGrid = document.getElementById("real-gallery-grid");
+      const syntheticGalleryGrid = document.getElementById("synthetic-gallery-grid");
+      const realResultsGrid = document.getElementById("real-results-grid");
+      const syntheticResultsGrid = document.getElementById("synthetic-results-grid");
 
       copyButton?.addEventListener("click", async () => {
         const bibtex = bibtexCode?.textContent?.trim() ?? "";
@@ -631,99 +329,6 @@
         }, 1800);
       });
 
-      const datasetModal = document.getElementById("dataset-modal");
-      const datasetTitle = document.getElementById("dataset-modal-title");
-      const closeDatasetModal = document.getElementById("close-dataset-modal");
-      const datasetDomainButtons = document.querySelectorAll(".dataset-domain");
-      const syntheticDatasetBrowser = document.getElementById("synthetic-dataset-browser");
-      const realDatasetGallery = document.getElementById("real-dataset-gallery");
-      const realGalleryGrid = document.getElementById("real-gallery-grid");
-      const syntheticGalleryGrid = document.getElementById("synthetic-gallery-grid");
-      const realGalleryFileWarning = document.getElementById("real-gallery-file-warning");
-      const realViewModeButtons = document.querySelectorAll(".real-view-mode");
-      const realViewerModal = document.getElementById("real-viewer-modal");
-      const closeRealViewerModal = document.getElementById("close-real-viewer-modal");
-      const realViewerTitle = document.getElementById("real-viewer-title");
-      const realViewerSubtitle = document.getElementById("real-viewer-subtitle");
-      const realViewerContainer = document.getElementById("real-viewer-container");
-      const realViewerSplitBar = document.getElementById("real-viewer-split-bar");
-      const realViewerFileWarning = document.getElementById("real-viewer-file-warning");
-      const inspectorModalityButtons = document.querySelectorAll(".inspector-modality");
-      const inspectorFrustumToggle = document.getElementById("inspector-frustum-toggle");
-      const datasetObjectTabs = document.getElementById("dataset-object-tabs");
-      const datasetObjectTitle = document.getElementById("dataset-object-title");
-      const datasetObjectDescription = document.getElementById("dataset-object-description");
-      const datasetSceneGrid = document.getElementById("dataset-scene-grid");
-      const legacyReal3dPanel = document.getElementById("real-3d-viewer-panel");
-      const canEmbed3dViewer = window.location.protocol === "http:" || window.location.protocol === "https:";
-      const maxActiveViewers = 4;
-      let real3dViewerModulePromise = null;
-      let realGalleryObserver = null;
-      const realGalleryViewers = new Map();
-      const activeViewerOrder = [];
-      const mountingViewerIds = new Set();
-      let realGalleryMode = "rgb";
-      let realGallerySplitTop = 0.5;
-      let inspectorViewer = null;
-      let inspectorScene = null;
-      let inspectorModality = "rgb";
-      let inspectorShowFrustums = false;
-      let inspectorSplitTop = 0.5;
-      const realSharedOrbit = {
-        yaw: 0,
-        pitch: Math.PI * 0.48,
-        dragging: false,
-        lastX: 0,
-        lastY: 0,
-      };
-
-      const datasetFallbacks = {
-        syntheticRgb: [
-          "./static/images/page-04-Image6.png",
-          "./static/images/page-04-Image12.png",
-          "./static/images/page-04-Image64.png",
-          "./static/images/page-04-Image77.png",
-        ],
-        syntheticNir: [
-          "./static/images/page-04-Image10.png",
-          "./static/images/page-04-Image71.png",
-          "./static/images/page-04-Image73.png",
-          "./static/images/page-04-Image75.png",
-        ],
-        env: [
-          "./static/images/page-04-Image55.png",
-          "./static/images/page-04-Image57.png",
-          "./static/images/page-04-Image50.png",
-          "./static/images/page-04-Image53.png",
-        ],
-      };
-
-      const datasetState = {
-        domain: "real",
-        objectIndex: 0,
-      };
-
-      const datasetDomains = {
-        real: {
-          title: "Real-world RGB-NIR 3D dataset",
-        },
-        synthetic: {
-          label: "Synthetic",
-          title: "Synthetic RGB-NIR dataset",
-          description: "Rendered RGB-NIR pairs matched to the acquisition setup.",
-          rgb: datasetFallbacks.syntheticRgb,
-          nir: datasetFallbacks.syntheticNir,
-        },
-      };
-
-      const syntheticObjects = ["Object 1", "Object 2", "Object 3"];
-      const syntheticScenes = [
-        { label: "Scene 1" },
-        { label: "Scene 2" },
-        { label: "Scene 3" },
-        { label: "Scene 4" },
-      ];
-
       const realDatasetGroups = [
         { label: "Cat", scenes: ["A", "C", "F", "K"], prefix: "cat" },
         { label: "Nefertiti", scenes: ["A", "C", "F", "K"], prefix: "nerfititi" },
@@ -732,7 +337,6 @@
       ];
 
       const realBoardColumns = ["Environment 1", "Environment 2", "Environment 3", "Environment 4"];
-      const syntheticBoardColumns = ["Environment 1", "Environment 2", "Environment 3", "Environment 4"];
 
       const syntheticDatasetGroups = [
         { label: "Chair", scenes: ["bridge", "courtyard", "museum", "sunset"], prefix: "chair" },
@@ -740,580 +344,169 @@
         { label: "Lego", scenes: ["bridge", "courtyard", "museum", "sunset"], prefix: "lego" },
       ];
 
-      const realDatasetScenes = realDatasetGroups.flatMap((group) =>
-        group.scenes.map((scene, index) => ({
-          object: group.label,
-          scene,
-          displayScene: `Environment ${index + 1}`,
-          folder: `${group.prefix}_${scene}`,
-          root: "real-dataset-3d",
-        }))
-      );
+      const resultPanels = [
+        { file: "component-top-left" },
+        { file: "component-top-right" },
+        { file: "diffuse" },
+        { file: "specular" },
+        { file: "relighting-render" },
+      ];
 
-      const syntheticDatasetScenes = syntheticDatasetGroups.flatMap((group) =>
-        group.scenes.map((scene, index) => ({
-          object: group.label,
-          scene: scene.charAt(0).toUpperCase() + scene.slice(1),
-          displayScene: `Environment ${index + 1}`,
-          folder: `${group.prefix}_${scene}`,
-          root: "synthetic-dataset-3d",
-        }))
-      );
-
-      const realPreviewStems = {
-        cat_A: "16_11_23_959",
-        cat_C: "16_08_40_625",
-        cat_F: "15_46_16_479",
-        cat_K: "12_35_03_952",
-        nerfititi_A: "17_07_37_242",
-        nerfititi_C: "16_40_19_152",
-        nerfititi_F: "14_12_15_209",
-        nerfititi_K: "13_07_53_744",
-        owl_L: "11_30_54_942",
-        owl_N: "12_14_43_193",
-        tiger_A: "18_05_33_602",
-        tiger_C: "17_11_35_720",
-        tiger_F: "16_03_31_459",
-        tiger_K: "13_33_49_414",
+      const reconstructionResults = {
+        synthetic: {
+          scenes: [
+            { id: 1 },
+            { id: 2 },
+            { id: 3 },
+          ],
+        },
+        real: {
+          scenes: [
+            { id: 1 },
+            { id: 2 },
+            { id: 3 },
+          ],
+        },
       };
 
-      function imageFor(pool, objectIndex, sceneIndex) {
-        return pool[(objectIndex + sceneIndex) % pool.length];
-      }
-
-      function setDomainStyles() {
-        datasetDomainButtons.forEach((button) => {
-          const active = button.dataset.domain === datasetState.domain;
-          button.classList.toggle("bg-white", active);
-          button.classList.toggle("text-teal", active);
-          button.classList.toggle("shadow-sm", active);
-          button.classList.toggle("text-neutral-600", !active);
-        });
-      }
-
-      function showDatasetMode() {
-        const isReal = datasetState.domain === "real";
-        syntheticDatasetBrowser?.classList.toggle("hidden", isReal);
-        legacyReal3dPanel?.classList.add("hidden");
-        datasetTitle.textContent = datasetDomains[datasetState.domain].title;
-      }
-
-      function renderSyntheticObjectTabs() {
-        if (!datasetObjectTabs) return;
-        datasetObjectTabs.innerHTML = syntheticObjects
-          .map((label, index) => {
-            const active = index === datasetState.objectIndex;
-            return `<button
-              type="button"
-              class="dataset-object-tab flex-none rounded-md border px-4 py-2 text-sm font-semibold ${
-                active
-                  ? "border-teal bg-teal text-white"
-                  : "border-line bg-white text-neutral-700 hover:border-teal hover:text-teal"
-              }"
-              data-object-index="${index}"
-              role="tab"
-              aria-selected="${active}"
-            >${label}</button>`;
-          })
-          .join("");
-      }
-
-      function renderSyntheticSceneGrid() {
-        const domain = datasetDomains.synthetic;
-        if (!datasetSceneGrid) return;
-
-        datasetObjectTitle.textContent = syntheticObjects[datasetState.objectIndex];
-        datasetObjectDescription.textContent = domain.description;
-        datasetSceneGrid.innerHTML = syntheticScenes
-          .map((scene, sceneIndex) => {
-            const futureBase = `./static/images/dataset/synthetic/object-${datasetState.objectIndex + 1}/scene-${sceneIndex + 1}`;
-            const rgb = imageFor(domain.rgb, datasetState.objectIndex, sceneIndex);
-            const nir = imageFor(domain.nir, datasetState.objectIndex, sceneIndex);
-            const env = imageFor(datasetFallbacks.env, datasetState.objectIndex, sceneIndex);
-
-            return `<article class="w-[82vw] flex-none snap-center overflow-hidden rounded-lg border border-line bg-white shadow-sm sm:w-[22rem] lg:w-auto">
-              <div class="dataset-split relative aspect-[4/3] cursor-ns-resize overflow-hidden bg-neutral-100" style="--split-y: 50%;">
-                <img class="absolute inset-0 h-full w-full object-cover" src="${rgb}" alt="Synthetic ${syntheticObjects[datasetState.objectIndex]} ${scene.label} RGB preview" data-future-src="${futureBase}-rgb.jpg" />
-                <img class="absolute inset-0 h-full w-full object-cover" style="clip-path: inset(var(--split-y) 0 0 0);" src="${nir}" alt="Synthetic ${syntheticObjects[datasetState.objectIndex]} ${scene.label} NIR preview" data-future-src="${futureBase}-nir.jpg" />
-                <div class="pointer-events-none absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)]" style="top: var(--split-y);"></div>
-                <div class="pointer-events-none absolute left-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-black/70 text-sm font-semibold text-white shadow" style="top: var(--split-y);">↕</div>
-                <div class="absolute left-3 top-3 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white">RGB</div>
-                <div class="absolute bottom-3 left-3 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white">NIR</div>
-                <div class="absolute bottom-3 right-3 overflow-hidden rounded-full border border-white/70 bg-white p-1 shadow">
-                  <img class="h-12 w-12 rounded-full object-cover" src="${env}" alt="${scene.label} environment preview" data-future-src="${futureBase}-env.jpg" />
-                </div>
-              </div>
-              <div class="p-4">
-                <div class="flex items-center justify-between gap-3">
-                  <h4 class="font-semibold">${scene.label}</h4>
-                  <span class="rounded-full bg-mist px-2 py-1 text-xs font-semibold text-teal">Env ${sceneIndex + 1}</span>
-                </div>
-                <p class="mt-2 text-sm leading-6 text-neutral-600">
-                  ${syntheticObjects[datasetState.objectIndex]} under ambient condition ${sceneIndex + 1}.
-                </p>
-              </div>
-            </article>`;
-          })
-          .join("");
-      }
-
-      function disposeRealGalleryViewers() {
-        realGalleryObserver?.disconnect();
-        realGalleryObserver = null;
-        activeViewerOrder.length = 0;
-        mountingViewerIds.clear();
-        for (const entry of realGalleryViewers.values()) {
-          entry.viewer?.dispose();
-        }
-        realGalleryViewers.clear();
-      }
-
-      async function ensureRealGalleryViewer(card) {
-        const id = card.dataset.viewerId;
-        const entry = realGalleryViewers.get(id);
-        if (!entry || entry.viewer) return entry?.viewer || null;
-        if (mountingViewerIds.has(id)) return null;
-        mountingViewerIds.add(id);
-
-        try {
-          real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=tiger-c-plane-offset-1");
-          const module = await real3dViewerModulePromise;
-          if (!realGalleryViewers.has(id)) return null;
-
-          entry.viewer = module.mountDatasetViewer({
-            container: entry.container,
-            basePath: entry.basePath,
+      function bindSplitPreviewInteractions(container) {
+        container?.querySelectorAll("[data-split-card]").forEach((card) => {
+          card.addEventListener("pointermove", (event) => {
+            const rect = card.getBoundingClientRect();
+            const splitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
+            card.style.setProperty("--split-y", `${splitTop * 100}%`);
           });
-          applyRealViewerMode(entry);
-          applyRealViewerOrbit(entry);
-          markViewerActive(id);
-          return entry.viewer;
-        } finally {
-          mountingViewerIds.delete(id);
-        }
-      }
-
-      function setRealViewModeStyles() {
-        realViewModeButtons.forEach((button) => {
-          const active = button.dataset.realViewMode === realGalleryMode;
-          button.classList.toggle("bg-white", active);
-          button.classList.toggle("text-teal", active);
-          button.classList.toggle("shadow-sm", active);
-          button.classList.toggle("text-neutral-600", !active);
-        });
-      }
-
-      function applyRealViewerMode(entry) {
-        if (!entry?.viewer) return;
-        entry.viewer.setModality(realGalleryMode === "nir" ? "nir" : "rgb");
-        entry.viewer.setRgbNirSplit(realGalleryMode === "split" ? realGallerySplitTop : null);
-      }
-
-      function applyRealViewerOrbit(entry) {
-        entry?.viewer?.setSharedOrbit?.(realSharedOrbit.yaw, realSharedOrbit.pitch);
-      }
-
-      function applyRealGalleryOrbit() {
-        realGalleryViewers.forEach((entry) => applyRealViewerOrbit(entry));
-      }
-
-      function applyRealGalleryMode() {
-        realGalleryViewers.forEach((entry) => applyRealViewerMode(entry));
-      }
-
-      function markViewerActive(id) {
-        const index = activeViewerOrder.indexOf(id);
-        if (index >= 0) activeViewerOrder.splice(index, 1);
-        activeViewerOrder.push(id);
-
-        while (activeViewerOrder.length > maxActiveViewers) {
-          const pauseId = activeViewerOrder.shift();
-          const pauseEntry = realGalleryViewers.get(pauseId);
-          pauseEntry?.viewer?.pause();
-          pauseEntry?.card?.classList.add("opacity-80");
-        }
-      }
-
-      function mountedRealViewerCount() {
-        let count = 0;
-        realGalleryViewers.forEach((entry) => {
-          if (entry.viewer) count += 1;
-        });
-        return count + mountingViewerIds.size;
-      }
-
-      function observeRealGalleryCards() {
-        if (!canEmbed3dViewer || !realGalleryGrid) return;
-        realGalleryObserver?.disconnect();
-        realGalleryObserver = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              const card = entry.target;
-              const id = card.dataset.viewerId;
-              const viewerEntry = realGalleryViewers.get(id);
-              if (!viewerEntry) return;
-
-              if (entry.isIntersecting) {
-                card.classList.remove("opacity-80");
-                if (!viewerEntry.viewer && mountedRealViewerCount() >= maxActiveViewers) {
-                  card.querySelector("[data-viewer-placeholder]").textContent = "";
-                  return;
-                }
-                ensureRealGalleryViewer(card).then((viewer) => {
-                  viewer?.resume();
-                  applyRealViewerMode(viewerEntry);
-                  applyRealViewerOrbit(viewerEntry);
-                  markViewerActive(id);
-                });
-              } else {
-                viewerEntry.viewer?.setRgbNirSplit(null);
-                viewerEntry.viewer?.pause();
-                card.style.setProperty("--split-y", "50%");
-                card.classList.add("opacity-80");
-              }
-            });
-          },
-          { root: null, rootMargin: "320px 0px", threshold: 0.01 }
-        );
-
-        realGalleryGrid.querySelectorAll("[data-real-card]").forEach((card) => {
-          realGalleryObserver.observe(card);
         });
       }
 
       function renderRealGallery() {
         if (!realGalleryGrid) return;
-        disposeRealGalleryViewers();
-        realGalleryFileWarning?.classList.toggle("hidden", canEmbed3dViewer);
 
-        realGalleryGrid.innerHTML = `<div class="rounded-lg border border-neutral-700 bg-neutral-900 p-2 text-white shadow-sm" data-real-board style="--split-y: ${realGallerySplitTop * 100}%;">
-          <div class="grid grid-cols-[4.75rem_repeat(4,minmax(0,1fr))] gap-px">
-            <div class="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">Object</div>
-            ${realBoardColumns
-              .map((column) => `<div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400">${column}</div>`)
-              .join("")}
-            ${realDatasetGroups
-              .map((group) => {
-                const cells = realBoardColumns
-                  .map((column, sceneIndex) => {
-                    const sceneName = group.scenes[sceneIndex];
-                    const scene = sceneName
-                      ? { object: group.label, scene: sceneName, displayScene: column, folder: `${group.prefix}_${sceneName}` }
-                      : null;
-                    if (!scene) {
-                      return `<div class="aspect-[4/3] bg-neutral-800/45"></div>`;
-                    }
-                    return `<div
-                      class="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-neutral-950 focus-within:ring-2 focus-within:ring-teal"
-                      style="--split-y: 50%;"
-                      data-real-card
-                      data-viewer-id="${scene.folder}"
-                      tabindex="0"
-                      role="button"
-                      aria-label="Open ${scene.object} ${scene.displayScene} 3D inspector"
-                    >
-                      <img class="absolute inset-0 h-full w-full object-cover" src="./static/images/dataset-preview/${scene.folder}-rgb.webp" alt="${scene.object} ${scene.displayScene} RGB preview" />
-                      <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100" style="clip-path: inset(var(--split-y) 0 0 0);" src="./static/images/dataset-preview/${scene.folder}-nir.webp" alt="${scene.object} ${scene.displayScene} NIR preview" data-static-nir />
-                      <div class="absolute inset-0 grid place-items-center px-4 text-center text-xs leading-5 text-neutral-500" data-viewer-placeholder>
-                        ${canEmbed3dViewer ? "" : "HTTP required"}
-                      </div>
-                      <div class="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10"></div>
-                      <div class="pointer-events-none absolute left-2 top-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold text-white/80 opacity-0 transition-opacity group-hover:opacity-100">
-                        ${scene.object} · ${scene.displayScene}
-                      </div>
-                      <div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100" data-split-overlay>
-                        <div class="absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" style="top: var(--split-y);"></div>
-                        <span class="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">RGB</span>
-                        <span class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">NIR</span>
-                      </div>
-                    </div>`;
-                  })
-                  .join("");
+        realGalleryGrid.innerHTML = [
+          '<div class="rounded-lg border border-neutral-700 bg-neutral-900 p-2 text-white shadow-sm">',
+          '<div class="grid grid-cols-[4.75rem_repeat(4,minmax(0,1fr))] gap-px">',
+          '<div class="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">Object</div>',
+          realBoardColumns
+            .map((column) => '<div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400">' + column + '</div>')
+            .join(""),
+          realDatasetGroups
+            .map((group) => {
+              const cells = realBoardColumns
+                .map((column, sceneIndex) => {
+                  const sceneName = group.scenes[sceneIndex];
+                  if (!sceneName) return '<div class="aspect-[4/3] bg-neutral-800/45"></div>';
 
-                return `<div class="grid place-items-center bg-neutral-800 px-2 py-2 text-xs font-semibold text-neutral-300 sm:text-sm">${group.label}</div>${cells}`;
-              })
-              .join("")}
-          </div>
-        </div>`;
+                  const folder = group.prefix + "_" + sceneName;
+                  const displayScene = column;
+                  return [
+                    '<div class="group relative aspect-[4/3] overflow-hidden bg-neutral-950" style="--split-y: 50%;" data-split-card>',
+                    '<img class="absolute inset-0 h-full w-full object-cover" src="./static/images/dataset-preview/' + folder + '-rgb.webp" alt="' + group.label + ' ' + displayScene + ' RGB preview" />',
+                    '<img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150 group-hover:opacity-100" style="clip-path: inset(var(--split-y) 0 0 0);" src="./static/images/dataset-preview/' + folder + '-nir.webp" alt="' + group.label + ' ' + displayScene + ' NIR preview" data-static-nir />',
+                    '<div class="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10"></div>',
+                    '<div class="pointer-events-none absolute left-2 top-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold text-white/80 opacity-0 transition-opacity group-hover:opacity-100">' + group.label + ' · ' + displayScene + '</div>',
+                    '<div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100" data-split-overlay>',
+                    '<div class="absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" style="top: var(--split-y);"></div>',
+                    '<span class="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">RGB</span>',
+                    '<span class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">NIR</span>',
+                    '</div>',
+                    '</div>',
+                  ].join("");
+                })
+                .join("");
 
-        realGalleryGrid.querySelectorAll("[data-real-card]").forEach((card) => {
-          const id = card.dataset.viewerId;
-          const scene = realDatasetScenes.find((item) => item.folder === id);
+              return '<div class="grid place-items-center bg-neutral-800 px-2 py-2 text-xs font-semibold text-neutral-300 sm:text-sm">' + group.label + '</div>' + cells;
+            })
+            .join(""),
+          "</div>",
+          "</div>",
+        ].join("");
 
-          card.addEventListener("pointermove", (event) => {
-            const rect = card.getBoundingClientRect();
-            const splitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
-            card.style.setProperty("--split-y", `${splitTop * 100}%`);
-          });
-
-          card.addEventListener("click", () => openRealViewerModal(scene));
-          card.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              openRealViewerModal(scene);
-            }
-          });
-        });
-
-        applyRealGalleryMode();
+        bindSplitPreviewInteractions(realGalleryGrid);
       }
 
       function renderSyntheticGallery() {
         if (!syntheticGalleryGrid) return;
 
-        syntheticGalleryGrid.innerHTML = `<div class="rounded-lg border border-neutral-700 bg-neutral-900 p-2 text-white shadow-sm">
-          <div class="grid grid-cols-[4.75rem_repeat(4,minmax(0,1fr))] gap-px">
-            <div class="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">Object</div>
-            ${syntheticBoardColumns
-              .map((column) => `<div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400">${column}</div>`)
-              .join("")}
-            ${syntheticDatasetGroups
-              .map((group) => {
-                const cells = group.scenes
-                  .map((sceneName) => {
-                    const scene = syntheticDatasetScenes.find((item) => item.folder === `${group.prefix}_${sceneName}`);
-                    return `<div
-                      class="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-neutral-950 focus-within:ring-2 focus-within:ring-teal"
-                      style="--split-y: 50%;"
-                      data-synthetic-card
-                      data-viewer-id="${scene.folder}"
-                      tabindex="0"
-                      role="button"
-                      aria-label="Open synthetic ${scene.object} ${scene.displayScene} 3D inspector"
-                    >
-                      <img class="absolute inset-0 h-full w-full object-cover" src="./static/images/synthetic-dataset-preview/${scene.folder}-rgb.webp" alt="Synthetic ${scene.object} ${scene.displayScene} RGB preview" />
-                      <img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100" style="clip-path: inset(var(--split-y) 0 0 0);" src="./static/images/synthetic-dataset-preview/${scene.folder}-nir.webp" alt="Synthetic ${scene.object} ${scene.displayScene} NIR preview" />
-                      <div class="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10"></div>
-                      <div class="pointer-events-none absolute left-2 top-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold text-white/80 opacity-0 transition-opacity group-hover:opacity-100">
-                        ${scene.object} · ${scene.displayScene}
-                      </div>
-                      <div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100">
-                        <div class="absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" style="top: var(--split-y);"></div>
-                        <span class="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">RGB</span>
-                        <span class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">NIR</span>
-                      </div>
-                    </div>`;
-                  })
-                  .join("");
+        syntheticGalleryGrid.innerHTML = [
+          '<div class="rounded-lg border border-neutral-700 bg-neutral-900 p-2 text-white shadow-sm">',
+          '<div class="grid grid-cols-[4.75rem_repeat(4,minmax(0,1fr))] gap-px">',
+          '<div class="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">Object</div>',
+          realBoardColumns
+            .map((column) => '<div class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-400">' + column + '</div>')
+            .join(""),
+          syntheticDatasetGroups
+            .map((group) => {
+              const cells = group.scenes
+                .map((sceneName, sceneIndex) => {
+                  const folder = group.prefix + "_" + sceneName;
+                  const displayScene = "Environment " + (sceneIndex + 1);
+                  return [
+                    '<div class="group relative aspect-[4/3] overflow-hidden bg-neutral-950" style="--split-y: 50%;" data-split-card>',
+                    '<img class="absolute inset-0 h-full w-full object-cover" src="./static/images/synthetic-dataset-preview/' + folder + '-rgb.webp" alt="Synthetic ' + group.label + ' ' + displayScene + ' RGB preview" />',
+                    '<img class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-150 group-hover:opacity-100" style="clip-path: inset(var(--split-y) 0 0 0);" src="./static/images/synthetic-dataset-preview/' + folder + '-nir.webp" alt="Synthetic ' + group.label + ' ' + displayScene + ' NIR preview" data-static-nir />',
+                    '<div class="pointer-events-none absolute inset-0 bg-black/0 transition group-hover:bg-black/10"></div>',
+                    '<div class="pointer-events-none absolute left-2 top-2 rounded bg-black/45 px-1.5 py-0.5 text-[11px] font-semibold text-white/80 opacity-0 transition-opacity group-hover:opacity-100">' + group.label + ' · ' + displayScene + '</div>',
+                    '<div class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100" data-split-overlay>',
+                    '<div class="absolute left-0 right-0 h-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.55)]" style="top: var(--split-y);"></div>',
+                    '<span class="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">RGB</span>',
+                    '<span class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white">NIR</span>',
+                    '</div>',
+                    '</div>',
+                  ].join("");
+                })
+                .join("");
 
-                return `<div class="grid place-items-center bg-neutral-800 px-2 py-2 text-xs font-semibold text-neutral-300 sm:text-sm">${group.label}</div>${cells}`;
-              })
-              .join("")}
-          </div>
-        </div>`;
+              return '<div class="grid place-items-center bg-neutral-800 px-2 py-2 text-xs font-semibold text-neutral-300 sm:text-sm">' + group.label + '</div>' + cells;
+            })
+            .join(""),
+          "</div>",
+          "</div>",
+        ].join("");
 
-        syntheticGalleryGrid.querySelectorAll("[data-synthetic-card]").forEach((card) => {
-          const scene = syntheticDatasetScenes.find((item) => item.folder === card.dataset.viewerId);
-          card.addEventListener("pointermove", (event) => {
-            const rect = card.getBoundingClientRect();
-            const splitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
-            card.style.setProperty("--split-y", `${splitTop * 100}%`);
-          });
-          card.addEventListener("click", () => openRealViewerModal(scene));
-          card.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              openRealViewerModal(scene);
-            }
-          });
-        });
+        bindSplitPreviewInteractions(syntheticGalleryGrid);
       }
 
-      function setInspectorModalityStyles() {
-        inspectorModalityButtons.forEach((button) => {
-          const active = button.dataset.inspectorModality === inspectorModality;
-          button.classList.toggle("bg-white", active);
-          button.classList.toggle("text-neutral-950", active);
-          button.classList.toggle("text-neutral-400", !active);
-        });
-        realViewerSplitBar?.classList.toggle("hidden", inspectorModality !== "split");
-        realViewerSplitBar?.style.setProperty("top", `${inspectorSplitTop * 100}%`);
+      function renderReconstructionResults(container, kind) {
+        if (!container) return;
+
+        const resultSet = reconstructionResults[kind];
+        container.innerHTML = resultSet.scenes
+          .map((scene) => {
+            const basePath = "./static/videos/results/" + kind + "/scene-" + scene.id;
+            const panelMarkup = resultPanels
+              .map((panel) => [
+                '<figure class="overflow-hidden bg-black">',
+                '<div class="relative aspect-square bg-black">',
+                '<video class="pointer-events-none h-full w-full object-contain" autoplay muted loop playsinline preload="auto">',
+                '<source src="' + basePath + "/" + panel.file + '.mp4" type="video/mp4" />',
+                "Your browser does not support the video tag.",
+                "</video>",
+                panel.file === "relighting-render"
+                  ? '<span class="pointer-events-none absolute right-2 top-2 rounded bg-black/65 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">Relighting</span>'
+                  : "",
+                "</div>",
+                "</figure>",
+              ].join(""))
+              .join("");
+
+            return [
+              '<article class="overflow-hidden rounded-xl border border-line bg-white shadow-sm">',
+              '<div class="border-b border-line px-5 py-3">',
+              '<p class="text-xs font-semibold uppercase tracking-wide text-teal">Object ' + scene.id + "</p>",
+              "</div>",
+              '<div class="grid gap-0 overflow-hidden bg-black sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">',
+              panelMarkup,
+              "</div>",
+              "</article>",
+            ].join("");
+          })
+          .join("");
       }
-
-      function setInspectorFrustumStyle() {
-        inspectorFrustumToggle?.classList.toggle("border-teal", inspectorShowFrustums);
-        inspectorFrustumToggle?.classList.toggle("text-white", inspectorShowFrustums);
-        inspectorFrustumToggle?.classList.toggle("bg-teal/20", inspectorShowFrustums);
-        inspectorFrustumToggle?.classList.toggle("text-neutral-300", !inspectorShowFrustums);
-        inspectorFrustumToggle?.setAttribute("aria-pressed", inspectorShowFrustums ? "true" : "false");
-      }
-
-      function applyInspectorViewerControls() {
-        if (!inspectorViewer) return;
-        inspectorViewer.setModality(inspectorModality === "nir" ? "nir" : "rgb");
-        inspectorViewer.setRgbNirSplit(inspectorModality === "split" ? inspectorSplitTop : null);
-        inspectorViewer.setFrustumsVisible?.(inspectorShowFrustums);
-      }
-
-      async function openRealViewerModal(scene) {
-        inspectorScene = scene;
-        inspectorModality = "rgb";
-        inspectorSplitTop = 0.5;
-        inspectorShowFrustums = false;
-        realViewerTitle.textContent = `${scene.object} · ${scene.displayScene || `Scene ${scene.scene}`}`;
-        realViewerModal?.classList.remove("hidden");
-        setInspectorModalityStyles();
-        setInspectorFrustumStyle();
-        closeRealViewerModal?.focus();
-
-        const canOpenViewer = window.location.protocol === "http:" || window.location.protocol === "https:";
-        realViewerContainer?.classList.toggle("hidden", !canOpenViewer);
-        realViewerFileWarning?.classList.toggle("hidden", canOpenViewer);
-        if (!canOpenViewer || !realViewerContainer) return;
-
-        inspectorViewer?.dispose();
-        inspectorViewer = null;
-        realViewerContainer.innerHTML = "";
-
-        real3dViewerModulePromise ||= import("./static/viewers/real-dataset-3d/viewer.js?v=tiger-c-plane-offset-1");
-        const module = await real3dViewerModulePromise;
-        if (inspectorScene !== scene) return;
-
-        inspectorViewer = module.mountDatasetViewer({
-          container: realViewerContainer,
-          basePath: `./static/viewers/${scene.root || "real-dataset-3d"}/${scene.folder}/`,
-        });
-        applyInspectorViewerControls();
-      }
-
-      function closeRealViewer() {
-        realViewerModal?.classList.add("hidden");
-        realViewerSplitBar?.classList.add("hidden");
-        inspectorViewer?.dispose();
-        inspectorViewer = null;
-        inspectorScene = null;
-      }
-
-      function renderDatasetModal() {
-        setDomainStyles();
-        showDatasetMode();
-        if (datasetState.domain === "real") {
-          renderRealGallery();
-        } else {
-          disposeRealGalleryViewers();
-          renderSyntheticObjectTabs();
-          renderSyntheticSceneGrid();
-        }
-      }
-
-      function openDatasetModal(domain) {
-        if (domain === "real") {
-          renderRealGallery();
-          realDatasetGallery?.scrollIntoView({ behavior: "smooth", block: "start" });
-          return;
-        }
-        datasetState.domain = domain || "real";
-        datasetState.objectIndex = 0;
-        datasetModal?.classList.remove("hidden");
-        document.body.classList.add("overflow-hidden");
-        renderDatasetModal();
-        closeDatasetModal?.focus();
-      }
-
-      function hideDatasetModal() {
-        closeRealViewer();
-        datasetModal?.classList.add("hidden");
-        document.body.classList.remove("overflow-hidden");
-        disposeRealGalleryViewers();
-      }
-
-      document.querySelectorAll("[data-open-dataset]").forEach((button) => {
-        button.addEventListener("click", () => openDatasetModal(button.dataset.openDataset));
-      });
-
-      datasetDomainButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          datasetState.domain = button.dataset.domain || "real";
-          datasetState.objectIndex = 0;
-          renderDatasetModal();
-        });
-      });
-
-      realViewModeButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          realGalleryMode = button.dataset.realViewMode || "rgb";
-          applyRealGalleryMode();
-        });
-      });
-
-      inspectorModalityButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          inspectorModality = button.dataset.inspectorModality || "rgb";
-          if (inspectorModality === "split") {
-            inspectorSplitTop = 0.5;
-          }
-          setInspectorModalityStyles();
-          applyInspectorViewerControls();
-        });
-      });
-
-      inspectorFrustumToggle?.addEventListener("click", () => {
-        inspectorShowFrustums = !inspectorShowFrustums;
-        setInspectorFrustumStyle();
-        applyInspectorViewerControls();
-      });
-
-      realViewerContainer?.addEventListener("pointermove", (event) => {
-        if (inspectorModality !== "split") return;
-        const rect = realViewerContainer.getBoundingClientRect();
-        inspectorSplitTop = Math.min(Math.max((event.clientY - rect.top) / rect.height, 0), 1);
-        realViewerSplitBar?.style.setProperty("top", `${inspectorSplitTop * 100}%`);
-        inspectorViewer?.setRgbNirSplit(inspectorSplitTop);
-      });
-
-      realViewerContainer?.addEventListener("pointerleave", () => {
-        if (inspectorModality !== "split") return;
-        inspectorViewer?.setRgbNirSplit(inspectorSplitTop);
-      });
-
-      datasetObjectTabs?.addEventListener("click", (event) => {
-        const tab = event.target.closest("[data-object-index]");
-        if (!tab) return;
-        datasetState.objectIndex = Number(tab.dataset.objectIndex);
-        renderSyntheticSceneGrid();
-        renderSyntheticObjectTabs();
-      });
-
-      function setAllDatasetSplitBars(percent) {
-        document.querySelectorAll(".dataset-split").forEach((split) => {
-          split.style.setProperty("--split-y", percent);
-        });
-      }
-
-      datasetSceneGrid?.addEventListener("pointermove", (event) => {
-        const split = event.target.closest(".dataset-split");
-        if (!split) return;
-        const rect = split.getBoundingClientRect();
-        const y = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
-        setAllDatasetSplitBars(`${(y / rect.height) * 100}%`);
-      });
-
-      closeDatasetModal?.addEventListener("click", hideDatasetModal);
-      datasetModal?.addEventListener("click", (event) => {
-        if (event.target === datasetModal) hideDatasetModal();
-      });
-      closeRealViewerModal?.addEventListener("click", closeRealViewer);
-      realViewerModal?.addEventListener("click", (event) => {
-        if (event.target === realViewerModal) closeRealViewer();
-      });
-
-      document.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape") return;
-        if (!realViewerModal?.classList.contains("hidden")) {
-          closeRealViewer();
-          return;
-        }
-        if (!datasetModal?.classList.contains("hidden")) {
-          hideDatasetModal();
-        }
-      });
 
       renderRealGallery();
       renderSyntheticGallery();
+      renderReconstructionResults(syntheticResultsGrid, "synthetic");
+      renderReconstructionResults(realResultsGrid, "real");
     </script>
   </body>
 </html>
-
-
-
-
